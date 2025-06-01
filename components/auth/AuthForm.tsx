@@ -4,8 +4,8 @@
 import React, { useState, useTransition, useEffect } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useSearchParams } from 'next/navigation';
-import AlertComponent from '@/components/ui/CustomAlert'; 
-import Spinner from '@/components/ui/Spinner'; 
+import AlertComponent from '@/components/ui/customalert'; 
+import Spinner from '@/components/ui/spinner'; 
 import { LogIn, Mail, Github, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

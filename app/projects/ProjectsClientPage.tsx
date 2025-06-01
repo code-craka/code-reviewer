@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useTransition, FormEvent, useCallback } from 'react';
 import { Project, ActionResponse } from '@/types/index';
 import { createNewProject, updateExistingProject, deleteExistingProject, getUserProjects } from '@/app/actions/projectActions';
-import Spinner from '@/components/ui/Spinner';
-import AlertComponent from '@/components/ui/CustomAlert';
+import Spinner from '@/components/ui/spinner';
+import AlertComponent from '@/components/ui/customalert';
 import { PlusCircle, Edit, Trash2, FolderOpen, FileText, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';

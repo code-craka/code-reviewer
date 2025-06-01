@@ -6,7 +6,7 @@ import ReviewerClientPage from './ReviewerClientPage';
 import prisma from '@/lib/prisma';
 import type { UserProfile, Project } from '@/types/index';
 import { Suspense, ReactElement } from 'react';
-import Spinner from '@/components/ui/Spinner';
+import Spinner from '@/components/ui/spinner';
 import { motion } from 'framer-motion'; // Import motion
 
 export const dynamic = 'force-dynamic';

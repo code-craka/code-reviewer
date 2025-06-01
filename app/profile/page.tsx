@@ -6,7 +6,7 @@ import ProfileClientPage from './ProfileClientPage';
 import prisma from '@/lib/prisma';
 import type { UserProfile } from '@/types/index';
 import { motion } from 'framer-motion'; // Import motion
-import Spinner from '@/components/ui/Spinner';
+import Spinner from '@/components/ui/spinner';
 
 export const dynamic = 'force-dynamic';
 

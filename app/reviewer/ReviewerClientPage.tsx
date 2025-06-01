@@ -12,8 +12,8 @@ import { createNewProject, updateExistingProject, getUserProjects, getProjectByI
 import CodeInput from '@/components/review/CodeInput'; 
 import ModelSelector from '@/components/review/ModelSelector';
 import ReviewOutput from '@/components/review/ReviewOutput';
-import Spinner from '@/components/ui/Spinner';
-import AlertComponent from '@/components/ui/CustomAlert'; // Renamed to avoid conflict
+import Spinner from '@/components/ui/spinner';
+import AlertComponent from '@/components/ui/customalert'; // Renamed to avoid conflict
 import { Save, FolderPlus, RotateCcw, Settings2, X } from 'lucide-react'; // Added Settings2, X
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';

@@ -2,11 +2,11 @@
 'use client';
 import React from 'react';
 import { Review } from '@/types/index';
-import Spinner from '@/components/ui/Spinner';
+import Spinner from '@/components/ui/spinner';
 import { Bot, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import AlertComponent from '@/components/ui/CustomAlert'; // Using the refactored Alert
+import AlertComponent from '@/components/ui/customalert'; // Using the refactored Alert
 
 const ReviewOutput: React.FC<{ review: Review }> = ({ review }) => {
   // For proper markdown rendering, install and use a library like 'react-markdown'
