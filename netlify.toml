@@ -1,0 +1,36 @@
+[build]
+  command = "pnpm prisma generate && pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--version"
+  NEXT_PUBLIC_SUPABASE_URL = "https://vxgicbvikwdkemlixscs.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4Z2ljYnZpa3dka2VtbGl4c2NzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzQ3MDMsImV4cCI6MjA2NDMxMDcwM30.QSbsRfKlK5M3_TEKL3BONupoXEoRssiaa3yFi68wRMU"
+  SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4Z2ljYnZpa3dka2VtbGl4c2NzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODczNDcwMywiZXhwIjoyMDY0MzEwNzAzfQ.i8IW1olKHVcMiDnkV_DvhDuSBaV-S3NdM-NkY3fKM90"
+  DATABASE_URL = "postgresql://postgres.vxgicbvikwdkemlixscs:KvrKP4BcWXaZd7ta@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+  DIRECT_URL = "postgresql://postgres.vxgicbvikwdkemlixscs:KvrKP4BcWXaZd7ta@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+  NEXT_PUBLIC_SITE_URL = "https://ai-code-reviewer.windsurf.build"
+  NEXT_PUBLIC_APP_URL = "https://ai-code-reviewer.windsurf.build"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Role = ["admin", "member"]}
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; font-src 'self'; connect-src 'self' https://*.supabase.co https://api.vercel.com;"
