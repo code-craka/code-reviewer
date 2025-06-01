@@ -1,0 +1,5 @@
+{
+  "name": "AI Code Reviewer",
+  "description": "An automated code review tool that uses Gemini to analyze your code and provide feedback. Support for other AI models like ChatGPT, Claude, and DeepSeek is simulated for demonstration purposes. An API_KEY environment variable is required for Gemini functionality.",
+  "requestFramePermissions": []
+}

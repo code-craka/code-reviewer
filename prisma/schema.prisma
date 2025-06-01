@@ -1,0 +1,191 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Profile {
+  id                 String            @id
+  email              String            @unique
+  username           String            @unique
+  profilePictureUrl  String?
+  bio                String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  projects           Project[]         @relation("ProjectOwner")
+  reviews            Review[]          @relation("ReviewAuthor")
+  reviewResults      ReviewResult[]    @relation("ReviewResultAuthor")
+  teamMemberships    TeamMember[]      @relation("TeamMember")
+  ownedTeams         Team[]            @relation("TeamOwner")
+  billingDetails     BillingDetail?    @relation("ProfileBilling")
+  subscriptions      Subscription[]    @relation("ProfileSubscription")
+  apiKeys            ApiKey[]          @relation("ProfileApiKey")
+  notifications      Notification[]    @relation("ProfileNotification")
+}
+
+model Project {
+  id                String          @id @default(uuid())
+  name              String
+  description       String?
+  repositoryUrl     String?
+  ownerId           String
+  owner             Profile         @relation("ProjectOwner", fields: [ownerId], references: [id])
+  reviews           Review[]        @relation("ProjectReviews")
+  reviewResults     ReviewResult[]  @relation("ProjectReviewResults")
+  teamId            String?
+  team              Team?           @relation("TeamProjects", fields: [teamId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  settings          ProjectSettings?
+}
+
+model ProjectSettings {
+  id                String    @id @default(uuid())
+  projectId         String    @unique
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  aiModel           String    @default("gemini-pro")
+  codeLanguages     String[]  @default(["javascript", "typescript"])
+  reviewDepth       String    @default("standard") // basic, standard, comprehensive
+  autoReviewEnabled Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Review {
+  id              String          @id @default(uuid())
+  projectId       String
+  project         Project         @relation("ProjectReviews", fields: [projectId], references: [id])
+  authorId        String
+  author          Profile         @relation("ReviewAuthor", fields: [authorId], references: [id])
+  content         String
+  reviewResults   ReviewResult[]  @relation("ReviewToResults")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ReviewResult {
+  id              String    @id @default(uuid())
+  reviewId        String
+  review          Review    @relation("ReviewToResults", fields: [reviewId], references: [id])
+  authorId        String
+  author          Profile   @relation("ReviewResultAuthor", fields: [authorId], references: [id])
+  projectId       String
+  project         Project   @relation("ProjectReviewResults", fields: [projectId], references: [id])
+  fileName        String
+  filePath        String
+  codeSnippet     String
+  aiModel         String
+  suggestion      String
+  lineStart       Int?
+  lineEnd         Int?
+  severity        String    @default("info") // info, warning, error
+  status          String    @default("open") // open, fixed, ignored
+  fixedAt         DateTime?
+  fixedByUserId   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Team {
+  id              String        @id @default(uuid())
+  name            String
+  description     String?
+  ownerId         String
+  owner           Profile       @relation("TeamOwner", fields: [ownerId], references: [id])
+  members         TeamMember[]  @relation("TeamMembers")
+  projects        Project[]     @relation("TeamProjects")
+  invitations     Invitation[]  @relation("TeamInvitations")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model TeamMember {
+  id              String    @id @default(uuid())
+  teamId          String
+  team            Team      @relation("TeamMembers", fields: [teamId], references: [id])
+  userId          String
+  user            Profile   @relation("TeamMember", fields: [userId], references: [id])
+  role            String    @default("member") // owner, admin, member, viewer
+  joinedAt        DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([teamId, userId])
+}
+
+model Invitation {
+  id              String    @id @default(uuid())
+  teamId          String
+  team            Team      @relation("TeamInvitations", fields: [teamId], references: [id])
+  email           String
+  role            String    @default("member") // admin, member, viewer
+  token           String    @unique
+  status          String    @default("pending") // pending, accepted, declined, expired
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([teamId, email])
+}
+
+model BillingDetail {
+  id              String    @id @default(uuid())
+  profileId       String    @unique
+  profile         Profile   @relation("ProfileBilling", fields: [profileId], references: [id])
+  companyName     String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String?
+  taxId           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Subscription {
+  id              String    @id @default(uuid())
+  profileId       String
+  profile         Profile   @relation("ProfileSubscription", fields: [profileId], references: [id])
+  planId          String
+  planName        String
+  status          String    @default("active") // active, canceled, past_due, trialing
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  paymentMethod    String?
+  paymentId        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model ApiKey {
+  id              String    @id @default(uuid())
+  profileId       String
+  profile         Profile   @relation("ProfileApiKey", fields: [profileId], references: [id])
+  name            String
+  key             String    @unique
+  lastUsed        DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Notification {
+  id              String    @id @default(uuid())
+  profileId       String
+  profile         Profile   @relation("ProfileNotification", fields: [profileId], references: [id])
+  type            String    // team_invitation, review_completed, subscription_expiring, etc.
+  title           String
+  message         String
+  isRead          Boolean   @default(false)
+  data            Json?     // Additional data related to the notification
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
