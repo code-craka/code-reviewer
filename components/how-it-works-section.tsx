@@ -1,29 +1,32 @@
-"use client"
+"use client";
 
-import { GitBranch, Zap, CheckCircle } from "lucide-react"
-import { ArrowRightIcon } from "@radix-ui/react-icons"
+import { GitBranch, Zap, CheckCircle } from "lucide-react";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 export const HowItWorksSection = () => {
   const steps = [
     {
       icon: <GitBranch className="w-12 h-12" />,
       title: "Connect Your Repository",
-      description: "Link your GitHub, GitLab, or Bitbucket repository in seconds",
+      description:
+        "Link your GitHub, GitLab, or Bitbucket repository in seconds",
       number: "01",
     },
     {
       icon: <Zap className="w-12 h-12" />,
       title: "AI Reviews Your Code",
-      description: "Our AI analyzes every line for bugs, performance, and security issues",
+      description:
+        "Our AI analyzes every line for bugs, performance, and security issues",
       number: "02",
     },
     {
       icon: <CheckCircle className="w-12 h-12" />,
       title: "Apply Suggestions",
-      description: "Receive actionable feedback and improve your code quality instantly",
+      description:
+        "Receive actionable feedback and improve your code quality instantly",
       number: "03",
     },
-  ]
+  ];
 
   return (
     <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -34,7 +37,9 @@ export const HowItWorksSection = () => {
               How It Works
             </span>
           </h2>
-          <p className="text-xl text-gray-300">Get started in minutes with our simple 3-step process</p>
+          <p className="text-xl text-gray-300">
+            Get started in minutes with our simple 3-step process
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-12">
@@ -48,8 +53,12 @@ export const HowItWorksSection = () => {
                   {step.number}
                 </div>
               </div>
-              <h3 className="text-2xl font-semibold text-white mb-4">{step.title}</h3>
-              <p className="text-gray-300 text-lg leading-relaxed">{step.description}</p>
+              <h3 className="text-2xl font-semibold text-white mb-4">
+                {step.title}
+              </h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
+                {step.description}
+              </p>
               {index < steps.length - 1 && (
                 <ArrowRightIcon className="w-8 h-8 text-violet-400/50 mx-auto mt-8 hidden md:block" />
               )}
@@ -58,5 +67,5 @@ export const HowItWorksSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

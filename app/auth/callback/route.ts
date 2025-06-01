@@ -1,20 +1,18 @@
-import { type NextRequest, NextResponse } from "next/server";
+// app/auth/callback/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-// Import the server client creation function from your server utility file
-// This avoids the TypeScript errors with cookies implementation
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
-
+// Modern Next.js Route Handler for callback
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next") || "/reviewer";
 
   if (code) {
-    // Use the utility function from your server file that already handles cookies correctly
-    const supabase = await createSupabaseServerClient();
-    
-    // Exchange the code for a session
+    const supabase = createSupabaseBrowserClient();
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(requestUrl.origin);
+  // Always redirect to intended next route or fallback
+  return NextResponse.redirect(new URL(next, requestUrl.origin));
 }

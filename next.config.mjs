@@ -15,13 +15,13 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['vxgicbvikwdkemlixscs.supabase.co'], // Add your Supabase storage domain
+    domains: ["vxgicbvikwdkemlixscs.supabase.co"], // Add your Supabase storage domain
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
+        protocol: "https",
+        hostname: "**.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/**",
       },
     ],
   },

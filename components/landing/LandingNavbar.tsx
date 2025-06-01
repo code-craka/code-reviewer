@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 export default function LandingNavbar() {
   return (
@@ -14,24 +14,38 @@ export default function LandingNavbar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-primary">AICodeReview</span>
+              <span className="text-xl font-bold text-primary">
+                AICodeReview
+              </span>
             </Link>
           </div>
-          
+
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/features"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Features
             </Link>
-            <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/pricing"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Pricing
             </Link>
-            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/about"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               About
             </Link>
           </nav>
-          
+
           <div className="flex items-center space-x-4">
-            <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/login"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Log in
             </Link>
             <Button asChild>

@@ -1,7 +1,7 @@
 // lib/supabase/server.ts
 
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -19,9 +19,9 @@ export async function createSupabaseServerClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
-        }
-      }
-    }
+        },
+      },
+    },
   );
 }
 
@@ -39,8 +39,8 @@ export async function createSupabaseServerAdminClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
-        }
-      }
-    }
+        },
+      },
+    },
   );
 }

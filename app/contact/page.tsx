@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
-import { AnimatedBackground } from "@/components/animated-background"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, Phone, MessageSquare } from "lucide-react"
-import { EnvelopeClosedIcon } from "@radix-ui/react-icons"
+import { useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
+import { AnimatedBackground } from "@/components/animated-background";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Phone, MessageSquare } from "lucide-react";
+import { EnvelopeClosedIcon } from "@radix-ui/react-icons";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -18,22 +18,24 @@ export default function ContactPage() {
     email: "",
     subject: "",
     message: "",
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Handle form submission
-    console.log("Contact form submitted:", formData)
+    console.log("Contact form submitted:", formData);
     // Reset form
-    setFormData({ name: "", email: "", subject: "", message: "" })
-  }
+    setFormData({ name: "", email: "", subject: "", message: "" });
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-    }))
-  }
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -49,7 +51,7 @@ export default function ContactPage() {
               </span>
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">
-              Get in touch with our team. We'd love to hear from you.
+              Get in touch with our team. We&apos;d love to hear from you.
             </p>
           </div>
 
@@ -66,7 +68,10 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-300 mb-2"
+                      >
                         Name
                       </label>
                       <Input
@@ -81,7 +86,10 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-300 mb-2"
+                      >
                         Email
                       </label>
                       <Input
@@ -98,7 +106,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
                       Subject
                     </label>
                     <Input
@@ -114,7 +125,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
                       Message
                     </label>
                     <textarea
@@ -148,8 +162,12 @@ export default function ContactPage() {
                       <EnvelopeClosedIcon className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Email Us</h3>
-                      <p className="text-gray-300 mb-2">Get in touch via email</p>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        Email Us
+                      </h3>
+                      <p className="text-gray-300 mb-2">
+                        Get in touch via email
+                      </p>
                       <a
                         href="mailto:hello@techsci.io"
                         className="text-violet-400 hover:text-violet-300 transition-colors"
@@ -168,7 +186,9 @@ export default function ContactPage() {
                       <MapPin className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Visit Us</h3>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        Visit Us
+                      </h3>
                       <p className="text-gray-300 mb-2">Our headquarters</p>
                       <p className="text-gray-300">
                         651 N Broad St, Suite 201
@@ -189,8 +209,12 @@ export default function ContactPage() {
                       <Phone className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Support</h3>
-                      <p className="text-gray-300 mb-2">Need help? We're here for you</p>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        Support
+                      </h3>
+                      <p className="text-gray-300 mb-2">
+                        Need help? We&apos;re here for you
+                      </p>
                       <p className="text-gray-300">
                         24/7 support available
                         <br />
@@ -202,13 +226,16 @@ export default function ContactPage() {
               </Card>
 
               <div className="bg-gradient-to-r from-violet-900/30 to-cyan-900/30 backdrop-blur-xl border border-violet-500/30 rounded-2xl p-6">
-                <h3 className="text-xl font-semibold text-white mb-3">Quick Response</h3>
+                <h3 className="text-xl font-semibold text-white mb-3">
+                  Quick Response
+                </h3>
                 <p className="text-gray-300 mb-4">
-                  We typically respond to all inquiries within 2 hours during business hours (9 AM - 6 PM EST, Monday -
-                  Friday).
+                  We typically respond to all inquiries within 2 hours during
+                  business hours (9 AM - 6 PM EST, Monday - Friday).
                 </p>
                 <p className="text-gray-300">
-                  For urgent technical issues, please include "URGENT" in your subject line.
+                  For urgent technical issues, please include &quot;URGENT&quot; in your
+                  subject line.
                 </p>
               </div>
             </div>
@@ -218,5 +245,5 @@ export default function ContactPage() {
 
       <Footer />
     </div>
-  )
+  );
 }

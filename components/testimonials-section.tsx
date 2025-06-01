@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Star } from "lucide-react"
-import { PlaceholderImage } from "@/components/ui/placeholder-image"
+import { Card, CardContent } from "@/components/ui/card";
+import { Star } from "lucide-react";
+import Image from "next/image";
+import { PlaceholderImage } from "@/components/ui/placeholder-image";
 
 export const TestimonialsSection = () => {
   const testimonials = [
@@ -36,7 +37,7 @@ export const TestimonialsSection = () => {
       avatar: null, // Will use PlaceholderImage instead
       initials: "EW",
     },
-  ]
+  ];
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -47,7 +48,9 @@ export const TestimonialsSection = () => {
               Loved by Developers
             </span>
           </h2>
-          <p className="text-xl text-gray-300">See what developers are saying about CodeReviewer AI</p>
+          <p className="text-xl text-gray-300">
+            See what developers are saying about CodeReviewer AI
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -59,15 +62,22 @@ export const TestimonialsSection = () => {
               <CardContent className="pt-6">
                 <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-yellow-400 fill-current"
+                    />
                   ))}
                 </div>
-                <p className="text-gray-300 mb-6 text-lg leading-relaxed">"{testimonial.content}"</p>
+                <p className="text-gray-300 mb-6 text-lg leading-relaxed">
+                  &quot;{testimonial.content}&quot;
+                </p>
                 <div className="flex items-center gap-4">
                   {testimonial.avatar ? (
-                    <img
+                    <Image
                       src={testimonial.avatar}
                       alt={testimonial.name}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full border-2 border-violet-500/30"
                     />
                   ) : (
@@ -81,7 +91,9 @@ export const TestimonialsSection = () => {
                     />
                   )}
                   <div>
-                    <p className="text-white font-semibold">{testimonial.name}</p>
+                    <p className="text-white font-semibold">
+                      {testimonial.name}
+                    </p>
                     <p className="text-gray-400 text-sm">
                       {testimonial.role} at {testimonial.company}
                     </p>
@@ -93,5 +105,5 @@ export const TestimonialsSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

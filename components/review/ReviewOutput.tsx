@@ -1,12 +1,17 @@
-
-'use client';
-import React from 'react';
-import { Review } from '@/types/index';
-import Spinner from '@/components/ui/spinner';
-import { Bot, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import AlertComponent from '@/components/ui/customalert'; // Using the refactored Alert
+"use client";
+import React from "react";
+import { Review } from "@/types/index";
+import Spinner from "@/components/ui/spinner";
+import { Bot, FileText, CheckCircle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { motion } from "framer-motion";
+import AlertComponent from "@/components/ui/customalert"; // Using the refactored Alert
 
 const ReviewOutput: React.FC<{ review: Review }> = ({ review }) => {
   // For proper markdown rendering, install and use a library like 'react-markdown'
@@ -28,7 +33,9 @@ const ReviewOutput: React.FC<{ review: Review }> = ({ review }) => {
             <Bot size={24} className="mr-2" />
             {review.modelName} Review
           </CardTitle>
-          {review.isLoading && <Spinner className="ml-2 h-5 w-5 text-primary" />}
+          {review.isLoading && (
+            <Spinner className="ml-2 h-5 w-5 text-primary" />
+          )}
         </CardHeader>
         <CardContent>
           {review.error && (
@@ -37,9 +44,12 @@ const ReviewOutput: React.FC<{ review: Review }> = ({ review }) => {
 
           {review.feedback && !review.error && (
             <div className="prose prose-sm sm:prose-base lg:prose-lg prose-invert max-w-none text-muted-foreground space-y-2">
-              {review.feedback.split('\n').map((line, index, arr) => (
-                <p key={index} className={`leading-relaxed ${line.trim() === '' && index < arr.length -1 ? 'my-1' : 'my-0'}`}>
-                  {line || '\u00A0'} {}
+              {review.feedback.split("\n").map((line, index, arr) => (
+                <p
+                  key={index}
+                  className={`leading-relaxed ${line.trim() === "" && index < arr.length - 1 ? "my-1" : "my-0"}`}
+                >
+                  {line || "\u00A0"} {}
                 </p>
               ))}
             </div>
@@ -52,21 +62,38 @@ const ReviewOutput: React.FC<{ review: Review }> = ({ review }) => {
             </div>
           )}
         </CardContent>
-        
-        {(typeof review.tokensUsed === 'number' && review.tokensUsed > 0 && !review.isLoading && !review.error) || 
-         (!review.isLoading && review.feedback && !review.error && review.feedback.toLowerCase().includes("appears to be well-written")) ? (
+
+        {(typeof review.tokensUsed === "number" &&
+          review.tokensUsed > 0 &&
+          !review.isLoading &&
+          !review.error) ||
+        (!review.isLoading &&
+          review.feedback &&
+          !review.error &&
+          review.feedback
+            .toLowerCase()
+            .includes("appears to be well-written")) ? (
           <CardFooter className="flex flex-col items-start space-y-2 pt-4 border-t">
-            {typeof review.tokensUsed === 'number' && review.tokensUsed > 0 && !review.isLoading && !review.error && (
-              <div className="text-xs text-muted-foreground">
-                <span className="font-medium">Tokens Used:</span> {review.tokensUsed}
-              </div>
-            )}
-            {!review.isLoading && review.feedback && !review.error && review.feedback.toLowerCase().includes("appears to be well-written") && (
-              <div className="text-green-500/80 text-sm flex items-center">
+            {typeof review.tokensUsed === "number" &&
+              review.tokensUsed > 0 &&
+              !review.isLoading &&
+              !review.error && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium">Tokens Used:</span>{" "}
+                  {review.tokensUsed}
+                </div>
+              )}
+            {!review.isLoading &&
+              review.feedback &&
+              !review.error &&
+              review.feedback
+                .toLowerCase()
+                .includes("appears to be well-written") && (
+                <div className="text-green-500/80 text-sm flex items-center">
                   <CheckCircle size={18} className="mr-2" />
                   AI indicates the code is generally well-written.
-              </div>
-            )}
+                </div>
+              )}
           </CardFooter>
         ) : null}
       </Card>

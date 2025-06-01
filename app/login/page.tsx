@@ -1,36 +1,43 @@
-import AuthForm from '@/components/auth/AuthForm';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion'; // Import motion
+import AuthForm from "@/components/auth/AuthForm";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion"; // Import motion
 
-type SearchParamsType = { 
-  next?: string | string[], 
-  message?: string | string[], 
-  error?: string | string[] 
+type SearchParamsType = {
+  next?: string | string[];
+  message?: string | string[];
+  error?: string | string[];
 };
 
 type PageProps = {
-  searchParams: Promise<SearchParamsType>;
+  searchParams: SearchParamsType;
 };
 
 export default async function LoginPage({ searchParams }: PageProps) {
   const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  // Await the searchParams promise in Next.js 15
-  const params = await searchParams;
-  
+  // Use searchParams directly
+  const params = searchParams;
+
   // Handle both string and string[] types for query parameters
-  const nextPath = typeof params.next === 'string' ? params.next : Array.isArray(params.next) ? params.next[0] : '/reviewer';
+  const nextPath =
+    typeof params.next === "string"
+      ? params.next
+      : Array.isArray(params.next)
+        ? params.next[0]
+        : "/reviewer";
 
   if (session) {
-    redirect(nextPath); 
+    redirect(nextPath);
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -39,14 +46,24 @@ export default async function LoginPage({ searchParams }: PageProps) {
     >
       <div className="absolute top-4 left-4">
         <Button variant="link" asChild>
-          <Link href="/">
-            &larr; Back to Home
-          </Link>
+          <Link href="/">&larr; Back to Home</Link>
         </Button>
       </div>
-      <AuthForm 
-        initialMessage={typeof params.message === 'string' ? params.message : Array.isArray(params.message) ? params.message[0] : undefined} 
-        initialError={typeof params.error === 'string' ? params.error : Array.isArray(params.error) ? params.error[0] : undefined} 
+      <AuthForm
+        initialMessage={
+          typeof params.message === "string"
+            ? params.message
+            : Array.isArray(params.message)
+              ? params.message[0]
+              : undefined
+        }
+        initialError={
+          typeof params.error === "string"
+            ? params.error
+            : Array.isArray(params.error)
+              ? params.error[0]
+              : undefined
+        }
       />
     </motion.div>
   );

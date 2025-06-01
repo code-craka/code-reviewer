@@ -1,26 +1,31 @@
 // Service for project settings operations
-import prisma from '@/lib/prisma';
-import { ProjectSettings, ActionResponse } from '@/types';
+import prisma from "@/lib/prisma";
+import { ProjectSettings, ActionResponse } from "@/types";
 
 /**
  * Get settings for a specific project
  */
-export async function getProjectSettings(projectId: string): Promise<ProjectSettings | null> {
+export async function getProjectSettings(
+  projectId: string,
+): Promise<ProjectSettings | null> {
   try {
     const settings = await prisma.projectSettings.findUnique({
-      where: { projectId }
+      where: { projectId },
     });
-    
+
     if (settings) {
       return {
         ...settings,
-        reviewDepth: settings.reviewDepth as 'basic' | 'standard' | 'comprehensive'
+        reviewDepth: settings.reviewDepth as
+          | "basic"
+          | "standard"
+          | "comprehensive",
       } as ProjectSettings;
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Error fetching project settings:', error);
+    console.error("Error fetching project settings:", error);
     return null;
   }
 }
@@ -33,47 +38,50 @@ export async function createOrUpdateProjectSettings(
   data: {
     aiModel: string;
     codeLanguages: string[];
-    reviewDepth: 'basic' | 'standard' | 'comprehensive';
+    reviewDepth: "basic" | "standard" | "comprehensive";
     autoReviewEnabled: boolean;
-  }
+  },
 ): Promise<ActionResponse<ProjectSettings>> {
   try {
     // Check if settings already exist
     const existingSettings = await prisma.projectSettings.findUnique({
-      where: { projectId }
+      where: { projectId },
     });
-    
+
     let settings;
-    
+
     if (existingSettings) {
       // Update existing settings
       settings = await prisma.projectSettings.update({
         where: { id: existingSettings.id },
-        data
+        data,
       });
     } else {
       // Create new settings
       settings = await prisma.projectSettings.create({
         data: {
           projectId,
-          ...data
-        }
+          ...data,
+        },
       });
     }
-    
+
     return {
       success: true,
       data: {
         ...settings,
-        reviewDepth: settings.reviewDepth as 'basic' | 'standard' | 'comprehensive'
+        reviewDepth: settings.reviewDepth as
+          | "basic"
+          | "standard"
+          | "comprehensive",
       } as ProjectSettings,
-      message: 'Project settings saved successfully'
+      message: "Project settings saved successfully",
     };
   } catch (error) {
-    console.error('Error saving project settings:', error);
+    console.error("Error saving project settings:", error);
     return {
       success: false,
-      error: 'Failed to save project settings'
+      error: "Failed to save project settings",
     };
   }
 }
@@ -84,14 +92,14 @@ export async function createOrUpdateProjectSettings(
 export function getDefaultProjectSettings(): {
   aiModel: string;
   codeLanguages: string[];
-  reviewDepth: 'basic' | 'standard' | 'comprehensive';
+  reviewDepth: "basic" | "standard" | "comprehensive";
   autoReviewEnabled: boolean;
 } {
   return {
-    aiModel: 'GEMINI',
-    codeLanguages: ['javascript', 'typescript', 'python', 'java'],
-    reviewDepth: 'standard',
-    autoReviewEnabled: false
+    aiModel: "GEMINI",
+    codeLanguages: ["javascript", "typescript", "python", "java"],
+    reviewDepth: "standard",
+    autoReviewEnabled: false,
   };
 }
 
@@ -100,21 +108,21 @@ export function getDefaultProjectSettings(): {
  */
 export async function toggleAutoReview(
   projectId: string,
-  enabled: boolean
+  enabled: boolean,
 ): Promise<ActionResponse<ProjectSettings>> {
   try {
     // Check if settings already exist
     const existingSettings = await prisma.projectSettings.findUnique({
-      where: { projectId }
+      where: { projectId },
     });
-    
+
     let settings;
-    
+
     if (existingSettings) {
       // Update existing settings
       settings = await prisma.projectSettings.update({
         where: { id: existingSettings.id },
-        data: { autoReviewEnabled: enabled }
+        data: { autoReviewEnabled: enabled },
       });
     } else {
       // Create new settings with defaults and set auto-review
@@ -123,24 +131,27 @@ export async function toggleAutoReview(
         data: {
           projectId,
           ...defaultSettings,
-          autoReviewEnabled: enabled
-        }
+          autoReviewEnabled: enabled,
+        },
       });
     }
-    
+
     return {
       success: true,
       data: {
         ...settings,
-        reviewDepth: settings.reviewDepth as 'basic' | 'standard' | 'comprehensive'
+        reviewDepth: settings.reviewDepth as
+          | "basic"
+          | "standard"
+          | "comprehensive",
       } as ProjectSettings,
-      message: `Auto-review ${enabled ? 'enabled' : 'disabled'} successfully`
+      message: `Auto-review ${enabled ? "enabled" : "disabled"} successfully`,
     };
   } catch (error) {
-    console.error('Error toggling auto-review setting:', error);
+    console.error("Error toggling auto-review setting:", error);
     return {
       success: false,
-      error: 'Failed to update auto-review setting'
+      error: "Failed to update auto-review setting",
     };
   }
 }

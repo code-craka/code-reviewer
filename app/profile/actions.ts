@@ -1,84 +1,110 @@
+"use server";
 
-'use server';
+import prisma from "@/lib/prisma";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { UserProfile, ActionResponse } from "@/types";
 
-import prisma from '@/lib/prisma';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { UserProfile, ActionResponse } from '@/types/index';
-import { revalidatePath } from 'next/cache';
+// Define a type for profile updates that matches Prisma's expected format
+type ProfileUpdates = {
+  username?: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+};
 
-export async function updateProfileServerAction(formData: FormData): Promise<ActionResponse<UserProfile>> {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: 'User not authenticated' };
-  }
-
-  const updates: Partial<Pick<UserProfile, 'username' | 'profilePictureUrl'>> = {};
-  const newUsername = formData.get('username') as string | null;
-  const newProfilePicUrl = formData.get('profilePictureUrl') as string | null;
-
-  if (newUsername !== null && newUsername.trim() !== '') {
-    if (newUsername.length < 3 || newUsername.length > 30) {
-        return {success: false, error: "Username must be between 3 and 30 characters."};
-    }
-    const existingUserWithUsername = await prisma.profile.findFirst({
-        where: {
-            username: newUsername.trim(),
-            NOT: { id: user.id }
-        }
-    });
-    if (existingUserWithUsername) {
-        return {success: false, error: "Username is already taken."};
-    }
-    updates.username = newUsername.trim();
+// Helper function to ensure type safety when converting from form data to Prisma-compatible updates
+function sanitizeUpdates(updates: Record<string, unknown>): ProfileUpdates {
+  const result: ProfileUpdates = {};
+  
+  if (typeof updates.username === 'string') {
+    result.username = updates.username;
   }
   
-  if (newProfilePicUrl !== null) {
-    if (newProfilePicUrl.trim() !== '') {
-        try {
-            new URL(newProfilePicUrl); 
-            updates.profilePictureUrl = newProfilePicUrl;
-        } catch (_) {
-            return { success: false, error: "Invalid profile picture URL format."};
-        }
-    } else {
-        updates.profilePictureUrl = null; 
-    }
+  if (updates.profilePictureUrl === null || typeof updates.profilePictureUrl === 'string') {
+    result.profilePictureUrl = updates.profilePictureUrl;
+  }
+  
+  if (updates.bio === null || typeof updates.bio === 'string') {
+    result.bio = updates.bio;
+  }
+  
+  return result;
+}
+
+export async function updateProfileServerAction(
+  formData: FormData,
+): Promise<ActionResponse<UserProfile>> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "User not authenticated" };
   }
 
+  const updates: Record<string, string> = {};
+  const username = formData.get("username") as string;
+  const profilePictureUrl = formData.get("profilePictureUrl") as string;
+  const bio = formData.get("bio") as string;
+
+  if (username) {
+    updates.username = username;
+  }
+
+  if (profilePictureUrl) {
+    updates.profilePictureUrl = profilePictureUrl;
+  }
+
+  if (bio) {
+    updates.bio = bio;
+  }
 
   if (Object.keys(updates).length === 0) {
-    return { success: false, error: 'No updates provided' };
+    return { success: false, error: "No updates provided" };
   }
 
   try {
+    // Use the sanitizeUpdates function to ensure type safety
+    const profileUpdates = sanitizeUpdates(updates);
+    
     let profile = await prisma.profile.findUnique({ where: { id: user.id } });
     if (!profile) {
-        profile = await prisma.profile.create({
-            data: {
-                id: user.id,
-                email: user.email || '', 
-                username: user.email?.split('@')[0] || `user_${Date.now()}`,
-                ...(updates as any) 
-            }
-        });
+      profile = await prisma.profile.create({
+        data: {
+          id: user.id,
+          email: user.email || "",
+          username: user.email?.split("@")[0] || `user_${Date.now()}`,
+          ...profileUpdates,
+        },
+      });
     } else {
-        profile = await prisma.profile.update({
-            where: { id: user.id },
-            data: updates as any, // Cast to any to satisfy Prisma's type requirements
-        });
+      profile = await prisma.profile.update({
+        where: { id: user.id },
+        data: profileUpdates,
+      });
     }
 
-    revalidatePath('/profile'); 
-    revalidatePath('/reviewer'); // If navbar showing profile info is on /reviewer page
+    revalidatePath("/profile");
+    revalidatePath("/reviewer"); // If navbar showing profile info is on /reviewer page
 
-    return { success: true, data: profile as UserProfile, message: 'Profile updated successfully!' };
-  } catch (error: any) {
-    console.error('Error updating profile:', error);
-    if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
-        return { success: false, error: 'This username is already taken. Please choose another.' };
+    return {
+      success: true,
+      data: profile as UserProfile,
+      message: "Profile updated successfully!",
+    };
+  } catch (error: unknown) {
+    console.error("Error updating profile:", error);
+    const prismaError = error as { code?: string; meta?: { target?: string[] } };
+    if (prismaError.code === "P2002" && prismaError.meta?.target?.includes("username")) {
+      return {
+        success: false,
+        error: "This username is already taken. Please choose another.",
+      };
     }
-    return { success: false, error: 'Failed to update profile. Please try again.' };
+    return { 
+      success: false, 
+      error: `Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    };
   }
 }

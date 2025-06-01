@@ -1,22 +1,36 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export default function TestUI() {
   return (
     <div className="p-8 w-full max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold tracking-tight mb-6">UI Components Test</h2>
+      <h2 className="text-3xl font-bold tracking-tight mb-6">
+        UI Components Test
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Card Component</CardTitle>
-            <CardDescription>This is a shadcn/ui card component</CardDescription>
+            <CardDescription>
+              This is a shadcn/ui card component
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">This card demonstrates that shadcn/ui components are working correctly with proper styling.</p>
+            <p className="mb-4">
+              This card demonstrates that shadcn/ui components are working
+              correctly with proper styling.
+            </p>
             <div className="flex gap-2 mb-4">
               <Badge>Badge 1</Badge>
               <Badge variant="secondary">Badge 2</Badge>
@@ -28,11 +42,13 @@ export default function TestUI() {
             <Button>Submit</Button>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Button Variants</CardTitle>
-            <CardDescription>Different button styles from shadcn/ui</CardDescription>
+            <CardDescription>
+              Different button styles from shadcn/ui
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">

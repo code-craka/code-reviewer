@@ -1,6 +1,6 @@
 // Service for team-related operations
-import prisma from '@/lib/prisma';
-import { Team, TeamMember, Invitation, ActionResponse } from '@/types';
+import prisma from "@/lib/prisma";
+import { Team, TeamMember, Invitation, ActionResponse } from "@/types";
 
 /**
  * Get a team by its ID
@@ -13,32 +13,36 @@ export async function getTeamById(teamId: string): Promise<Team | null> {
         owner: true,
         members: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         projects: true,
-        invitations: true
-      }
+        invitations: true,
+      },
     });
-    
+
     if (team) {
       return {
         ...team,
-        members: team.members.map(member => ({
+        members: team.members.map((member) => ({
           ...member,
-          role: member.role as 'owner' | 'admin' | 'member' | 'viewer'
+          role: member.role as "owner" | "admin" | "member" | "viewer",
         })) as TeamMember[],
-        invitations: team.invitations.map(invitation => ({
+        invitations: team.invitations.map((invitation) => ({
           ...invitation,
-          role: invitation.role as 'admin' | 'member' | 'viewer',
-          status: invitation.status as 'pending' | 'accepted' | 'declined' | 'expired'
-        })) as Invitation[]
+          role: invitation.role as "admin" | "member" | "viewer",
+          status: invitation.status as
+            | "pending"
+            | "accepted"
+            | "declined"
+            | "expired",
+        })) as Invitation[],
       } as Team;
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Error fetching team:', error);
+    console.error("Error fetching team:", error);
     return null;
   }
 }
@@ -54,11 +58,11 @@ export async function getUserTeams(userId: string): Promise<Team[]> {
       include: {
         members: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
-        projects: true
-      }
+        projects: true,
+      },
     });
 
     // Get teams the user is a member of (but doesn't own)
@@ -69,43 +73,43 @@ export async function getUserTeams(userId: string): Promise<Team[]> {
             userId: userId,
             NOT: {
               team: {
-                ownerId: userId
-              }
-            }
-          }
-        }
+                ownerId: userId,
+              },
+            },
+          },
+        },
       },
       include: {
         owner: true,
         members: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
-        projects: true
-      }
+        projects: true,
+      },
     });
 
     // Combine and return all teams with proper type casting
-    const typedOwnedTeams = ownedTeams.map(team => ({
+    const typedOwnedTeams = ownedTeams.map((team) => ({
       ...team,
-      members: team.members.map(member => ({
+      members: team.members.map((member) => ({
         ...member,
-        role: member.role as 'owner' | 'admin' | 'member' | 'viewer'
-      })) as TeamMember[]
+        role: member.role as "owner" | "admin" | "member" | "viewer",
+      })) as TeamMember[],
     })) as Team[];
-    
-    const typedMemberTeams = memberTeams.map(team => ({
+
+    const typedMemberTeams = memberTeams.map((team) => ({
       ...team,
-      members: team.members.map(member => ({
+      members: team.members.map((member) => ({
         ...member,
-        role: member.role as 'owner' | 'admin' | 'member' | 'viewer'
-      })) as TeamMember[]
+        role: member.role as "owner" | "admin" | "member" | "viewer",
+      })) as TeamMember[],
     })) as Team[];
-    
+
     return [...typedOwnedTeams, ...typedMemberTeams];
   } catch (error) {
-    console.error('Error fetching user teams:', error);
+    console.error("Error fetching user teams:", error);
     return [];
   }
 }
@@ -113,25 +117,31 @@ export async function getUserTeams(userId: string): Promise<Team[]> {
 /**
  * Get all pending invitations for a user by email
  */
-export async function getPendingInvitationsByEmail(email: string): Promise<Invitation[]> {
+export async function getPendingInvitationsByEmail(
+  email: string,
+): Promise<Invitation[]> {
   try {
     const invitations = await prisma.invitation.findMany({
       where: {
         email: email,
-        status: 'pending'
+        status: "pending",
       },
       include: {
-        team: true
-      }
+        team: true,
+      },
     });
-    
-    return invitations.map(invitation => ({
+
+    return invitations.map((invitation) => ({
       ...invitation,
-      role: invitation.role as 'admin' | 'member' | 'viewer',
-      status: invitation.status as 'pending' | 'accepted' | 'declined' | 'expired'
+      role: invitation.role as "admin" | "member" | "viewer",
+      status: invitation.status as
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "expired",
     })) as Invitation[];
   } catch (error) {
-    console.error('Error fetching pending invitations:', error);
+    console.error("Error fetching pending invitations:", error);
     return [];
   }
 }
@@ -140,17 +150,19 @@ export async function getPendingInvitationsByEmail(email: string): Promise<Invit
  * Generate a unique invitation token
  */
 function generateInvitationToken(): string {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
 }
 
 /**
  * Create a new team
  */
 export async function createTeam(
-  name: string, 
-  description: string | null, 
-  ownerId: string
+  name: string,
+  description: string | null,
+  ownerId: string,
 ): Promise<ActionResponse<Team>> {
   try {
     const team = await prisma.team.create({
@@ -161,40 +173,41 @@ export async function createTeam(
         members: {
           create: {
             userId: ownerId,
-            role: 'owner'
-          }
-        }
-      }
+            role: "owner",
+          },
+        },
+      },
     });
-    
+
     // For newly created teams, we need to fetch the team with members included
     const teamWithMembers = await prisma.team.findUnique({
       where: { id: team.id },
       include: {
         members: {
           include: {
-            user: true
-          }
-        }
-      }
+            user: true,
+          },
+        },
+      },
     });
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       data: {
         ...team,
-        members: teamWithMembers?.members.map(member => ({
-          ...member,
-          role: member.role as 'owner' | 'admin' | 'member' | 'viewer'
-        })) || []
-      } as Team, 
-      message: 'Team created successfully' 
+        members:
+          teamWithMembers?.members.map((member) => ({
+            ...member,
+            role: member.role as "owner" | "admin" | "member" | "viewer",
+          })) || [],
+      } as Team,
+      message: "Team created successfully",
     };
   } catch (error) {
-    console.error('Error creating team:', error);
-    return { 
-      success: false, 
-      error: 'Failed to create team' 
+    console.error("Error creating team:", error);
+    return {
+      success: false,
+      error: "Failed to create team",
     };
   }
 }
@@ -205,7 +218,7 @@ export async function createTeam(
 export async function inviteUserToTeam(
   teamId: string,
   email: string,
-  role: string = 'member'
+  role: string = "member",
 ): Promise<ActionResponse<Invitation>> {
   try {
     // Check if invitation already exists
@@ -213,14 +226,14 @@ export async function inviteUserToTeam(
       where: {
         teamId,
         email,
-        status: 'pending'
-      }
+        status: "pending",
+      },
     });
 
     if (existingInvitation) {
       return {
         success: false,
-        error: 'An invitation has already been sent to this email'
+        error: "An invitation has already been sent to this email",
       };
     }
 
@@ -235,24 +248,28 @@ export async function inviteUserToTeam(
         email,
         role,
         token: generateInvitationToken(),
-        expiresAt
-      }
+        expiresAt,
+      },
     });
 
     return {
       success: true,
       data: {
         ...invitation,
-        role: invitation.role as 'admin' | 'member' | 'viewer',
-        status: invitation.status as 'pending' | 'accepted' | 'declined' | 'expired'
+        role: invitation.role as "admin" | "member" | "viewer",
+        status: invitation.status as
+          | "pending"
+          | "accepted"
+          | "declined"
+          | "expired",
       } as Invitation,
-      message: 'Invitation sent successfully'
+      message: "Invitation sent successfully",
     };
   } catch (error) {
-    console.error('Error inviting user to team:', error);
+    console.error("Error inviting user to team:", error);
     return {
       success: false,
-      error: 'Failed to send invitation'
+      error: "Failed to send invitation",
     };
   }
 }
@@ -262,25 +279,25 @@ export async function inviteUserToTeam(
  */
 export async function acceptTeamInvitation(
   token: string,
-  userId: string
+  userId: string,
 ): Promise<ActionResponse<TeamMember>> {
   try {
     // Find the invitation
     const invitation = await prisma.invitation.findUnique({
-      where: { token }
+      where: { token },
     });
 
     if (!invitation) {
       return {
         success: false,
-        error: 'Invitation not found'
+        error: "Invitation not found",
       };
     }
 
-    if (invitation.status !== 'pending') {
+    if (invitation.status !== "pending") {
       return {
         success: false,
-        error: `Invitation has already been ${invitation.status}`
+        error: `Invitation has already been ${invitation.status}`,
       };
     }
 
@@ -288,12 +305,12 @@ export async function acceptTeamInvitation(
       // Update invitation status to expired
       await prisma.invitation.update({
         where: { id: invitation.id },
-        data: { status: 'expired' }
+        data: { status: "expired" },
       });
-      
+
       return {
         success: false,
-        error: 'Invitation has expired'
+        error: "Invitation has expired",
       };
     }
 
@@ -301,20 +318,20 @@ export async function acceptTeamInvitation(
     const existingMember = await prisma.teamMember.findFirst({
       where: {
         teamId: invitation.teamId,
-        userId
-      }
+        userId,
+      },
     });
 
     if (existingMember) {
       // Update invitation status to accepted
       await prisma.invitation.update({
         where: { id: invitation.id },
-        data: { status: 'accepted' }
+        data: { status: "accepted" },
       });
-      
+
       return {
         success: false,
-        error: 'You are already a member of this team'
+        error: "You are already a member of this team",
       };
     }
 
@@ -325,14 +342,14 @@ export async function acceptTeamInvitation(
         data: {
           teamId: invitation.teamId,
           userId,
-          role: invitation.role
-        }
+          role: invitation.role,
+        },
       });
 
       // Update invitation status
       await tx.invitation.update({
         where: { id: invitation.id },
-        data: { status: 'accepted' }
+        data: { status: "accepted" },
       });
 
       return teamMember;
@@ -342,15 +359,15 @@ export async function acceptTeamInvitation(
       success: true,
       data: {
         ...result,
-        role: result.role as 'owner' | 'admin' | 'member' | 'viewer'
+        role: result.role as "owner" | "admin" | "member" | "viewer",
       } as TeamMember,
-      message: 'You have joined the team'
+      message: "You have joined the team",
     };
   } catch (error) {
-    console.error('Error accepting team invitation:', error);
+    console.error("Error accepting team invitation:", error);
     return {
       success: false,
-      error: 'Failed to accept invitation'
+      error: "Failed to accept invitation",
     };
   }
 }
@@ -361,30 +378,35 @@ export async function acceptTeamInvitation(
 export async function removeTeamMember(
   teamId: string,
   userId: string,
-  currentUserId: string
+  currentUserId: string,
 ): Promise<ActionResponse<void>> {
   try {
     // Get the team to check permissions
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       include: {
-        members: true
-      }
+        members: true,
+      },
     });
 
     if (!team) {
       return {
         success: false,
-        error: 'Team not found'
+        error: "Team not found",
       };
     }
 
     // Check if current user is the owner or an admin
-    const currentUserMember = team.members.find(m => m.userId === currentUserId);
-    if (!currentUserMember || (currentUserMember.role !== 'owner' && currentUserMember.role !== 'admin')) {
+    const currentUserMember = team.members.find(
+      (m) => m.userId === currentUserId,
+    );
+    if (
+      !currentUserMember ||
+      (currentUserMember.role !== "owner" && currentUserMember.role !== "admin")
+    ) {
       return {
         success: false,
-        error: 'You do not have permission to remove members from this team'
+        error: "You do not have permission to remove members from this team",
       };
     }
 
@@ -392,7 +414,7 @@ export async function removeTeamMember(
     if (team.ownerId === userId) {
       return {
         success: false,
-        error: 'Cannot remove the team owner'
+        error: "Cannot remove the team owner",
       };
     }
 
@@ -401,20 +423,20 @@ export async function removeTeamMember(
       where: {
         teamId_userId: {
           teamId,
-          userId
-        }
-      }
+          userId,
+        },
+      },
     });
 
     return {
       success: true,
-      message: 'Team member removed successfully'
+      message: "Team member removed successfully",
     };
   } catch (error) {
-    console.error('Error removing team member:', error);
+    console.error("Error removing team member:", error);
     return {
       success: false,
-      error: 'Failed to remove team member'
+      error: "Failed to remove team member",
     };
   }
 }

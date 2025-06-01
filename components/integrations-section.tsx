@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { PlaceholderImage } from "@/components/ui/placeholder-image"
+import { PlaceholderImage } from "@/components/ui/placeholder-image";
 
 export const IntegrationsSection = () => {
   const integrations = [
@@ -10,7 +10,7 @@ export const IntegrationsSection = () => {
     { name: "GitLab", glow: "hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]" },
     { name: "Bitbucket", glow: "hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]" },
     { name: "Slack", glow: "hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]" },
-  ]
+  ];
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -20,7 +20,9 @@ export const IntegrationsSection = () => {
             Seamless Integrations
           </span>
         </h2>
-        <p className="text-xl text-gray-300 mb-12">Connect with the tools you already use and love</p>
+        <p className="text-xl text-gray-300 mb-12">
+          Connect with the tools you already use and love
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {integrations.map((integration, index) => (
@@ -41,5 +43,5 @@ export const IntegrationsSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

@@ -1,64 +1,67 @@
 // lib/utils/error-handler.ts
-import { StorageError } from '@/lib/supabase/storage';
-import { toast } from '@/hooks/use-toast';
+import { StorageError } from "@/lib/supabase/storage";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Error handler for storage operations
  * @param error The error to handle
  * @param fallbackMessage A fallback message if the error is not a StorageError
  */
-export function handleStorageError(error: unknown, fallbackMessage = 'An error occurred during the storage operation'): void {
-  console.error('Storage operation error:', error);
-  
+export function handleStorageError(
+  error: unknown,
+  fallbackMessage = "An error occurred during the storage operation",
+): void {
+  console.error("Storage operation error:", error);
+
   if (error instanceof StorageError) {
     // Handle specific storage error codes
     switch (error.code) {
-      case 'FILE_TOO_LARGE':
+      case "FILE_TOO_LARGE":
         toast({
-          title: 'File Too Large',
+          title: "File Too Large",
           description: error.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
         break;
-      case 'INVALID_FILE_TYPE':
+      case "INVALID_FILE_TYPE":
         toast({
-          title: 'Invalid File Type',
+          title: "Invalid File Type",
           description: error.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
         break;
-      case 'UPLOAD_FAILED':
+      case "UPLOAD_FAILED":
         toast({
-          title: 'Upload Failed',
-          description: 'Failed to upload file. Please try again later.',
-          variant: 'destructive',
+          title: "Upload Failed",
+          description: "Failed to upload file. Please try again later.",
+          variant: "destructive",
         });
         break;
-      case 'DELETE_FAILED':
+      case "DELETE_FAILED":
         toast({
-          title: 'Delete Failed',
-          description: 'Failed to delete file. Please try again later.',
-          variant: 'destructive',
+          title: "Delete Failed",
+          description: "Failed to delete file. Please try again later.",
+          variant: "destructive",
         });
         break;
       default:
         toast({
-          title: 'Storage Error',
+          title: "Storage Error",
           description: error.message || fallbackMessage,
-          variant: 'destructive',
+          variant: "destructive",
         });
     }
   } else if (error instanceof Error) {
     toast({
-      title: 'Error',
+      title: "Error",
       description: error.message || fallbackMessage,
-      variant: 'destructive',
+      variant: "destructive",
     });
   } else {
     toast({
-      title: 'Error',
+      title: "Error",
       description: fallbackMessage,
-      variant: 'destructive',
+      variant: "destructive",
     });
   }
 }
@@ -73,7 +76,7 @@ export function handleStorageError(error: unknown, fallbackMessage = 'An error o
 export async function safeStorageOperation<T>(
   operation: () => Promise<T>,
   fallbackValue: T,
-  errorMessage = 'An error occurred during the storage operation'
+  errorMessage = "An error occurred during the storage operation",
 ): Promise<T> {
   try {
     return await operation();

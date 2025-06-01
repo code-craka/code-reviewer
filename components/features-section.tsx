@@ -1,41 +1,60 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Zap, Globe, GitBranch, Shield, Users, MessageSquare } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Zap,
+  Globe,
+  GitBranch,
+  Shield,
+  Users,
+  MessageSquare,
+} from "lucide-react";
 
 export const FeaturesSection = () => {
   const features = [
     {
       icon: <Zap className="w-6 h-6" />,
       title: "Real-time Code Feedback",
-      description: "Get instant AI-powered suggestions as you code, catching issues before they become problems.",
+      description:
+        "Get instant AI-powered suggestions as you code, catching issues before they become problems.",
     },
     {
       icon: <Globe className="w-6 h-6" />,
       title: "Multi-language Support",
-      description: "Support for 20+ programming languages including JavaScript, Python, Go, Rust, and more.",
+      description:
+        "Support for 20+ programming languages including JavaScript, Python, Go, Rust, and more.",
     },
     {
       icon: <GitBranch className="w-6 h-6" />,
       title: "GitHub/GitLab/Bitbucket Integrations",
-      description: "Seamlessly integrate with your existing workflow and version control systems.",
+      description:
+        "Seamlessly integrate with your existing workflow and version control systems.",
     },
     {
       icon: <Shield className="w-6 h-6" />,
       title: "Security-First Analysis",
-      description: "Advanced security vulnerability detection with OWASP compliance checking.",
+      description:
+        "Advanced security vulnerability detection with OWASP compliance checking.",
     },
     {
       icon: <Users className="w-6 h-6" />,
       title: "Team Collaboration",
-      description: "Share insights, annotations, and code reviews across your entire development team.",
+      description:
+        "Share insights, annotations, and code reviews across your entire development team.",
     },
     {
       icon: <MessageSquare className="w-6 h-6" />,
       title: "Smart Auto-Suggestions",
-      description: "AI-generated code improvements and refactoring suggestions tailored to your codebase.",
+      description:
+        "AI-generated code improvements and refactoring suggestions tailored to your codebase.",
     },
-  ]
+  ];
 
   return (
     <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -47,7 +66,8 @@ export const FeaturesSection = () => {
             </span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Everything you need to maintain high code quality and accelerate your development workflow
+            Everything you need to maintain high code quality and accelerate
+            your development workflow
           </p>
         </div>
 
@@ -61,7 +81,9 @@ export const FeaturesSection = () => {
                 <div className="w-14 h-14 bg-gradient-to-br from-violet-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center text-violet-400 mb-4 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
+                <CardTitle className="text-white text-xl">
+                  {feature.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-gray-300 text-base leading-relaxed">
@@ -73,5 +95,5 @@ export const FeaturesSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

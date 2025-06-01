@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { AnimatedBackground } from "@/components/animated-background"
-import { Navigation } from "@/components/navigation"
-import { HeroSection } from "@/components/hero-section"
-import { FeaturesSection } from "@/components/features-section"
-import { HowItWorksSection } from "@/components/how-it-works-section"
-import { TestimonialsSection } from "@/components/testimonials-section"
-import { IntegrationsSection } from "@/components/integrations-section"
-import { PricingSection } from "@/components/pricing-section"
-import { FAQSection } from "@/components/faq-section"
-import { NewsletterSection } from "@/components/newsletter-section"
-import { Footer } from "@/components/footer"
+import { AnimatedBackground } from "@/components/animated-background";
+import { Navigation } from "@/components/navigation";
+import { HeroSection } from "@/components/hero-section";
+import { FeaturesSection } from "@/components/features-section";
+import { HowItWorksSection } from "@/components/how-it-works-section";
+import { TestimonialsSection } from "@/components/testimonials-section";
+import { IntegrationsSection } from "@/components/integrations-section";
+import { PricingSection } from "@/components/pricing-section";
+import { FAQSection } from "@/components/faq-section";
+import { NewsletterSection } from "@/components/newsletter-section";
+import { Footer } from "@/components/footer";
 
 // CodeCarousel component removed as it's not being used in the application
 
@@ -35,5 +35,5 @@ export default function HomePage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

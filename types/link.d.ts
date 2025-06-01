@@ -2,11 +2,11 @@
  * Type declarations for link-related functionality
  */
 
-declare module 'next/link' {
-  import { LinkProps as NextLinkProps } from 'next/dist/client/link';
-  import React from 'react';
+declare module "next/link" {
+  import { LinkProps as NextLinkProps } from "next/dist/client/link";
+  import React from "react";
 
-  type LinkProps = Omit<NextLinkProps, 'as' | 'passHref' | 'prefetch'> & {
+  type LinkProps = Omit<NextLinkProps, "as" | "passHref" | "prefetch"> & {
     children?: React.ReactNode;
     prefetch?: boolean;
     className?: string;
@@ -20,6 +20,6 @@ declare module 'next/link' {
 declare global {
   interface Window {
     // Add any browser-specific globals here
-    supabase?: any;
+    supabase?: unknown;
   }
 }

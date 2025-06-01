@@ -1,6 +1,11 @@
-"use client"
+"use client";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export const FAQSection = () => {
   const faqs = [
@@ -29,7 +34,7 @@ export const FAQSection = () => {
       answer:
         "Yes! Pro and Team plans allow you to create custom rules, disable specific checks, and configure the AI to match your team's coding standards.",
     },
-  ]
+  ];
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -40,7 +45,9 @@ export const FAQSection = () => {
               Frequently Asked Questions
             </span>
           </h2>
-          <p className="text-xl text-gray-300">Everything you need to know about CodeReviewer AI</p>
+          <p className="text-xl text-gray-300">
+            Everything you need to know about CodeReviewer AI
+          </p>
         </div>
 
         <Accordion type="single" collapsible className="space-y-4">
@@ -53,11 +60,13 @@ export const FAQSection = () => {
               <AccordionTrigger className="text-white hover:text-violet-400 text-lg py-6">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="text-gray-300 text-base leading-relaxed pb-6">{faq.answer}</AccordionContent>
+              <AccordionContent className="text-gray-300 text-base leading-relaxed pb-6">
+                {faq.answer}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
       </div>
     </section>
-  )
-}
+  );
+};

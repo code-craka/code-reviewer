@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Code, Menu } from "lucide-react"
-import type { User } from "@supabase/supabase-js"
-import { Cross2Icon } from "@radix-ui/react-icons"
-import { createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Code, Menu } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
+import { Cross2Icon } from "@radix-ui/react-icons";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface NavigationProps {
   initialUser?: User | null;
@@ -14,42 +15,46 @@ interface NavigationProps {
   username?: string | null;
 }
 
-export const Navigation = ({ initialUser, profilePictureUrl, username }: NavigationProps = {}) => {
-  const [user, setUser] = useState<User | null>(initialUser || null)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+export const Navigation = ({
+  initialUser,
+  profilePictureUrl,
+  username,
+}: NavigationProps = {}) => {
+  const [user, setUser] = useState<User | null>(initialUser || null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    
+
     // Get initial user
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
+      setUser(user);
+    });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-    })
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
-    const supabase = createSupabaseBrowserClient()
-    await supabase.auth.signOut()
-  }
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+  };
 
   const handleSignIn = async () => {
-    const supabase = createSupabaseBrowserClient()
+    const supabase = createSupabaseBrowserClient();
     await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
-  }
+    });
+  };
 
   return (
     <nav className="fixed top-0 w-full bg-gray-950/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
@@ -66,29 +71,48 @@ export const Navigation = ({ initialUser, profilePictureUrl, username }: Navigat
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/#features" className="text-gray-300 hover:text-cyan-400 transition-colors">
+            <Link
+              href="/#features"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+            >
               Features
             </Link>
-            <Link href="/#how-it-works" className="text-gray-300 hover:text-cyan-400 transition-colors">
+            <Link
+              href="/#how-it-works"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+            >
               How it Works
             </Link>
-            <Link href="/#pricing" className="text-gray-300 hover:text-cyan-400 transition-colors">
+            <Link
+              href="/#pricing"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+            >
               Pricing
             </Link>
-            <Link href="/about" className="text-gray-300 hover:text-cyan-400 transition-colors">
+            <Link
+              href="/about"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+            >
               About
             </Link>
-            <Link href="/contact" className="text-gray-300 hover:text-cyan-400 transition-colors">
+            <Link
+              href="/contact"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+            >
               Contact
             </Link>
 
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-gray-300">Welcome, {username || user.email}</span>
+                <span className="text-gray-300">
+                  Welcome, {username || user.email}
+                </span>
                 {profilePictureUrl && (
-                  <img 
-                    src={profilePictureUrl} 
-                    alt="Profile" 
+                  <Image
+                    src={profilePictureUrl}
+                    alt="Profile"
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full border border-violet-500/50"
                   />
                 )}
@@ -117,8 +141,15 @@ export const Navigation = ({ initialUser, profilePictureUrl, username }: Navigat
           </div>
 
           {/* Mobile menu button */}
-          <button className="md:hidden text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <Cross2Icon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <button
+            className="md:hidden text-gray-300 hover:text-white"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <Cross2Icon className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -126,19 +157,34 @@ export const Navigation = ({ initialUser, profilePictureUrl, username }: Navigat
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-800/50">
             <div className="flex flex-col gap-4">
-              <Link href="/#features" className="text-gray-300 hover:text-cyan-400 transition-colors">
+              <Link
+                href="/#features"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
                 Features
               </Link>
-              <Link href="/#how-it-works" className="text-gray-300 hover:text-cyan-400 transition-colors">
+              <Link
+                href="/#how-it-works"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
                 How it Works
               </Link>
-              <Link href="/#pricing" className="text-gray-300 hover:text-cyan-400 transition-colors">
+              <Link
+                href="/#pricing"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
                 Pricing
               </Link>
-              <Link href="/about" className="text-gray-300 hover:text-cyan-400 transition-colors">
+              <Link
+                href="/about"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
                 About
               </Link>
-              <Link href="/contact" className="text-gray-300 hover:text-cyan-400 transition-colors">
+              <Link
+                href="/contact"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
                 Contact
               </Link>
 
@@ -146,13 +192,17 @@ export const Navigation = ({ initialUser, profilePictureUrl, username }: Navigat
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {profilePictureUrl && (
-                      <img 
-                        src={profilePictureUrl} 
-                        alt="Profile" 
+                      <Image
+                        src={profilePictureUrl}
+                        alt="Profile"
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-full border border-violet-500/50"
                       />
                     )}
-                    <span className="text-gray-300">Welcome, {username || user.email}</span>
+                    <span className="text-gray-300">
+                      Welcome, {username || user.email}
+                    </span>
                   </div>
                   <Button
                     onClick={handleSignOut}
@@ -181,5 +231,5 @@ export const Navigation = ({ initialUser, profilePictureUrl, username }: Navigat
         )}
       </div>
     </nav>
-  )
-}
+  );
+};

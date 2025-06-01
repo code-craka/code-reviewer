@@ -1,30 +1,36 @@
 // Service for subscription and billing operations
-import prisma from '@/lib/prisma';
-import { Subscription, BillingDetail, ActionResponse } from '@/types';
+import prisma from "@/lib/prisma";
+import { Subscription, BillingDetail, ActionResponse } from "@/types";
 
 /**
  * Get a user's subscription
  */
-export async function getUserSubscription(profileId: string): Promise<Subscription | null> {
+export async function getUserSubscription(
+  profileId: string,
+): Promise<Subscription | null> {
   try {
     const subscription = await prisma.subscription.findFirst({
-      where: { 
+      where: {
         profileId,
-        status: { in: ['active', 'trialing'] }
+        status: { in: ["active", "trialing"] },
       },
-      orderBy: { currentPeriodEnd: 'desc' }
+      orderBy: { currentPeriodEnd: "desc" },
     });
-    
+
     if (subscription) {
       return {
         ...subscription,
-        status: subscription.status as 'active' | 'canceled' | 'past_due' | 'trialing'
+        status: subscription.status as
+          | "active"
+          | "canceled"
+          | "past_due"
+          | "trialing",
       } as Subscription;
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Error fetching user subscription:', error);
+    console.error("Error fetching user subscription:", error);
     return null;
   }
 }
@@ -32,15 +38,17 @@ export async function getUserSubscription(profileId: string): Promise<Subscripti
 /**
  * Get a user's billing details
  */
-export async function getUserBillingDetails(profileId: string): Promise<BillingDetail | null> {
+export async function getUserBillingDetails(
+  profileId: string,
+): Promise<BillingDetail | null> {
   try {
     const billingDetails = await prisma.billingDetail.findUnique({
-      where: { profileId }
+      where: { profileId },
     });
-    
+
     return billingDetails;
   } catch (error) {
-    console.error('Error fetching billing details:', error);
+    console.error("Error fetching billing details:", error);
     return null;
   }
 }
@@ -52,24 +60,24 @@ export async function createOrUpdateSubscription(
   profileId: string,
   planId: string,
   planName: string,
-  status: 'active' | 'canceled' | 'past_due' | 'trialing',
+  status: "active" | "canceled" | "past_due" | "trialing",
   currentPeriodStart: Date,
   currentPeriodEnd: Date,
   cancelAtPeriodEnd: boolean = false,
   paymentMethod?: string,
-  paymentId?: string
+  paymentId?: string,
 ): Promise<ActionResponse<Subscription>> {
   try {
     // Check for existing active subscription
     const existingSubscription = await prisma.subscription.findFirst({
-      where: { 
+      where: {
         profileId,
-        status: { in: ['active', 'trialing'] }
-      }
+        status: { in: ["active", "trialing"] },
+      },
     });
-    
+
     let subscription;
-    
+
     if (existingSubscription) {
       // Update existing subscription
       subscription = await prisma.subscription.update({
@@ -82,8 +90,8 @@ export async function createOrUpdateSubscription(
           currentPeriodEnd,
           cancelAtPeriodEnd,
           paymentMethod,
-          paymentId
-        }
+          paymentId,
+        },
       });
     } else {
       // Create new subscription
@@ -97,24 +105,30 @@ export async function createOrUpdateSubscription(
           currentPeriodEnd,
           cancelAtPeriodEnd,
           paymentMethod,
-          paymentId
-        }
+          paymentId,
+        },
       });
     }
-    
+
     return {
       success: true,
       data: {
         ...subscription,
-        status: subscription.status as 'active' | 'canceled' | 'past_due' | 'trialing'
+        status: subscription.status as
+          | "active"
+          | "canceled"
+          | "past_due"
+          | "trialing",
       } as Subscription,
-      message: existingSubscription ? 'Subscription updated' : 'Subscription created'
+      message: existingSubscription
+        ? "Subscription updated"
+        : "Subscription created",
     };
   } catch (error) {
-    console.error('Error creating/updating subscription:', error);
+    console.error("Error creating/updating subscription:", error);
     return {
       success: false,
-      error: 'Failed to process subscription'
+      error: "Failed to process subscription",
     };
   }
 }
@@ -124,32 +138,36 @@ export async function createOrUpdateSubscription(
  */
 export async function cancelSubscription(
   subscriptionId: string,
-  cancelAtPeriodEnd: boolean = true
+  cancelAtPeriodEnd: boolean = true,
 ): Promise<ActionResponse<Subscription>> {
   try {
     const subscription = await prisma.subscription.update({
       where: { id: subscriptionId },
       data: {
         cancelAtPeriodEnd,
-        status: cancelAtPeriodEnd ? 'active' : 'canceled'
-      }
+        status: cancelAtPeriodEnd ? "active" : "canceled",
+      },
     });
-    
+
     return {
       success: true,
       data: {
         ...subscription,
-        status: subscription.status as 'active' | 'canceled' | 'past_due' | 'trialing'
+        status: subscription.status as
+          | "active"
+          | "canceled"
+          | "past_due"
+          | "trialing",
       } as Subscription,
-      message: cancelAtPeriodEnd 
-        ? 'Subscription will be canceled at the end of the billing period' 
-        : 'Subscription canceled immediately'
+      message: cancelAtPeriodEnd
+        ? "Subscription will be canceled at the end of the billing period"
+        : "Subscription canceled immediately",
     };
   } catch (error) {
-    console.error('Error canceling subscription:', error);
+    console.error("Error canceling subscription:", error);
     return {
       success: false,
-      error: 'Failed to cancel subscription'
+      error: "Failed to cancel subscription",
     };
   }
 }
@@ -167,42 +185,42 @@ export async function createOrUpdateBillingDetails(
     zipCode?: string;
     country?: string;
     taxId?: string;
-  }
+  },
 ): Promise<ActionResponse<BillingDetail>> {
   try {
     // Check for existing billing details
     const existingDetails = await prisma.billingDetail.findUnique({
-      where: { profileId }
+      where: { profileId },
     });
-    
+
     let billingDetails;
-    
+
     if (existingDetails) {
       // Update existing details
       billingDetails = await prisma.billingDetail.update({
         where: { id: existingDetails.id },
-        data
+        data,
       });
     } else {
       // Create new billing details
       billingDetails = await prisma.billingDetail.create({
         data: {
           profileId,
-          ...data
-        }
+          ...data,
+        },
       });
     }
-    
+
     return {
       success: true,
       data: billingDetails,
-      message: 'Billing details saved'
+      message: "Billing details saved",
     };
   } catch (error) {
-    console.error('Error saving billing details:', error);
+    console.error("Error saving billing details:", error);
     return {
       success: false,
-      error: 'Failed to save billing details'
+      error: "Failed to save billing details",
     };
   }
 }
@@ -210,19 +228,21 @@ export async function createOrUpdateBillingDetails(
 /**
  * Check if a user has an active subscription
  */
-export async function hasActiveSubscription(profileId: string): Promise<boolean> {
+export async function hasActiveSubscription(
+  profileId: string,
+): Promise<boolean> {
   try {
     const subscription = await prisma.subscription.findFirst({
-      where: { 
+      where: {
         profileId,
-        status: { in: ['active', 'trialing'] },
-        currentPeriodEnd: { gt: new Date() }
-      }
+        status: { in: ["active", "trialing"] },
+        currentPeriodEnd: { gt: new Date() },
+      },
     });
-    
+
     return !!subscription;
   } catch (error) {
-    console.error('Error checking subscription status:', error);
+    console.error("Error checking subscription status:", error);
     return false;
   }
 }

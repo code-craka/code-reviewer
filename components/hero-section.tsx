@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Play } from "lucide-react"
-import { CodeCarousel } from "./code-carousel"
-import { createSupabaseBrowserClient } from "@/lib/supabase/client"
-import { ArrowRightIcon } from "@radix-ui/react-icons"
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
+import { CodeCarousel } from "./code-carousel";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 export const HeroSection = () => {
   const handleTryFree = async () => {
     const supabase = createSupabaseBrowserClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (!user) {
       await supabase.auth.signInWithOAuth({
@@ -19,12 +19,12 @@ export const HeroSection = () => {
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
     } else {
       // Redirect to dashboard or app
-      window.location.href = "/dashboard"
+      window.location.href = "/dashboard";
     }
-  }
+  };
 
   return (
     <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -40,8 +40,9 @@ export const HeroSection = () => {
                 <span className="text-white">Review Faster.</span>
               </h1>
               <p className="text-xl text-gray-300 leading-relaxed max-w-2xl">
-                AI that auto-detects bugs, security issues, and performance bottlenecks in your code. Ship better
-                software with confidence and reduce review time by 60%.
+                AI that auto-detects bugs, security issues, and performance
+                bottlenecks in your code. Ship better software with confidence
+                and reduce review time by 60%.
               </p>
             </div>
 
@@ -82,5 +83,5 @@ export const HeroSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

@@ -1,15 +1,15 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
-import SupabaseProvider from "@/components/providers/supabase-provider"
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import Script from "next/script";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import SupabaseProvider from "@/components/providers/supabase-provider";
 
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
-})
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#0f0f23" },
   ],
-}
+};
 
 export const metadata: Metadata = {
   title: {
@@ -112,19 +112,27 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#8b5cf6",
     "msapplication-config": "/browserconfig.xml",
   },
-}
+};
 
 interface RootLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${inter.variable} dark`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} dark`}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Preconnect to external domains for performance */}
+        {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
 
         {/* Favicon and app icons */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -133,12 +141,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <link rel="manifest" href="/manifest.json" />
 
         {/* Additional meta tags for better SEO */}
-        <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+        <meta
+          name="format-detection"
+          content="telephone=no, date=no, email=no, address=no"
+        />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
 
-        {/* Structured data for better search results */}
+        {/* Structured data for search */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -191,7 +205,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
           }}
         />
       </head>
-      <body className={`${inter.className} min-h-screen bg-gray-950 text-white antialiased`} suppressHydrationWarning>
+      <body
+        className={`${inter.className} min-h-screen bg-gray-950 text-white antialiased`}
+        suppressHydrationWarning
+      >
         <SupabaseProvider>
           {/* Skip to main content for accessibility */}
           <a
@@ -201,14 +218,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
             Skip to main content
           </a>
 
-          {/* Main application content */}
           <div className="relative min-h-screen flex flex-col">
             {/* Background effects */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-              {/* Animated gradient mesh */}
               <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/20 to-cyan-900/20 animate-pulse" />
-
-              {/* Floating particles */}
               <div className="absolute inset-0">
                 {[...Array(30)].map((_, i) => (
                   <div
@@ -223,43 +236,37 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   />
                 ))}
               </div>
-
-              {/* Glowing orbs */}
               <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl animate-pulse" />
               <div
                 className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"
                 style={{ animationDelay: "2s" }}
               />
             </div>
-
-            {/* Main content area */}
             <main id="main-content" className="relative flex-1">
               {children}
             </main>
           </div>
-
-          {/* Toast notifications */}
           <Toaster />
         </SupabaseProvider>
 
-        {/* Analytics and tracking scripts would go here */}
+        {/* Analytics scripts (only in production) */}
         {process.env.NODE_ENV === "production" && (
           <>
-            {/* Google Analytics */}
-            <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID" />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', 'GA_MEASUREMENT_ID');
-                `,
-              }}
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"
+              strategy="afterInteractive"
             />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'GA_MEASUREMENT_ID');
+              `}
+            </Script>
           </>
         )}
       </body>
     </html>
-  )
+  );
 }

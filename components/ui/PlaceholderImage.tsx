@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface PlaceholderImageProps {
   text?: string;
@@ -15,31 +15,33 @@ interface PlaceholderImageProps {
 }
 
 export default function PlaceholderImage({
-  text = '',
+  text = "",
   width = 64,
   height = 64,
   rounded = false,
   initials = false,
-  className = '',
-  bgColor = '#e2e8f0', // Default light gray background
-  textColor = '#475569', // Default slate text color
+  className = "",
+  bgColor = "#e2e8f0", // Default light gray background
+  textColor = "#475569", // Default slate text color
 }: PlaceholderImageProps) {
   // If initials is true, extract initials from text
   // Otherwise use the text as is
-  const displayText = initials && text ? 
-    text.split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2) : 
-    text;
+  const displayText =
+    initials && text
+      ? text
+          .split(" ")
+          .map((word) => word.charAt(0))
+          .join("")
+          .toUpperCase()
+          .substring(0, 2)
+      : text;
 
   return (
     <div
       className={cn(
-        'flex items-center justify-center overflow-hidden bg-muted',
-        rounded ? 'rounded-full' : 'rounded-md',
-        className
+        "flex items-center justify-center overflow-hidden bg-muted",
+        rounded ? "rounded-full" : "rounded-md",
+        className,
       )}
       style={{
         width: `${width}px`,
@@ -47,7 +49,7 @@ export default function PlaceholderImage({
         backgroundColor: bgColor,
         color: textColor,
         fontSize: `${Math.min(width, height) * 0.4}px`,
-        fontWeight: 'bold',
+        fontWeight: "bold",
       }}
       aria-label="Placeholder image"
     >

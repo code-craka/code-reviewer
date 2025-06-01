@@ -1,14 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { CheckCircle } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { CheckCircle } from "lucide-react";
 
 export const PricingSection = () => {
-  const [isYearly, setIsYearly] = useState(false)
+  const [isYearly, setIsYearly] = useState(false);
 
   const pricingPlans = [
     {
@@ -16,7 +22,12 @@ export const PricingSection = () => {
       monthlyPrice: 0,
       yearlyPrice: 0,
       description: "Perfect for individual developers",
-      features: ["Up to 5 repositories", "Basic code analysis", "Community support", "GitHub integration"],
+      features: [
+        "Up to 5 repositories",
+        "Basic code analysis",
+        "Community support",
+        "GitHub integration",
+      ],
       cta: "Get Started Free",
       popular: false,
     },
@@ -52,7 +63,7 @@ export const PricingSection = () => {
       cta: "Contact Sales",
       popular: false,
     },
-  ]
+  ];
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -63,18 +74,28 @@ export const PricingSection = () => {
               Simple Pricing
             </span>
           </h2>
-          <p className="text-xl text-gray-300 mb-8">Choose the plan that fits your team size and needs</p>
+          <p className="text-xl text-gray-300 mb-8">
+            Choose the plan that fits your team size and needs
+          </p>
 
           <div className="flex items-center justify-center gap-4 mb-8">
-            <span className={`text-lg ${!isYearly ? "text-white" : "text-gray-400"}`}>Monthly</span>
+            <span
+              className={`text-lg ${!isYearly ? "text-white" : "text-gray-400"}`}
+            >
+              Monthly
+            </span>
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
               className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-violet-500 data-[state=checked]:to-cyan-500"
             />
-            <span className={`text-lg ${isYearly ? "text-white" : "text-gray-400"}`}>
+            <span
+              className={`text-lg ${isYearly ? "text-white" : "text-gray-400"}`}
+            >
               Yearly
-              <Badge className="ml-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white">Save 20%</Badge>
+              <Badge className="ml-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white">
+                Save 20%
+              </Badge>
             </span>
           </div>
         </div>
@@ -95,17 +116,26 @@ export const PricingSection = () => {
                 </Badge>
               )}
               <CardHeader className="text-center">
-                <CardTitle className="text-white text-2xl mb-2">{plan.name}</CardTitle>
+                <CardTitle className="text-white text-2xl mb-2">
+                  {plan.name}
+                </CardTitle>
                 <div className="mb-4">
                   <span className="text-5xl font-bold text-white">
-                    ${isYearly ? Math.floor(plan.yearlyPrice / 12) : plan.monthlyPrice}
+                    $
+                    {isYearly
+                      ? Math.floor(plan.yearlyPrice / 12)
+                      : plan.monthlyPrice}
                   </span>
                   <span className="text-gray-400 text-lg">/month</span>
                   {isYearly && plan.yearlyPrice > 0 && (
-                    <div className="text-sm text-gray-400 mt-1">Billed annually (${plan.yearlyPrice}/year)</div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Billed annually (${plan.yearlyPrice}/year)
+                    </div>
                   )}
                 </div>
-                <CardDescription className="text-gray-300 text-lg">{plan.description}</CardDescription>
+                <CardDescription className="text-gray-300 text-lg">
+                  {plan.description}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-4 mb-8">
@@ -131,5 +161,5 @@ export const PricingSection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

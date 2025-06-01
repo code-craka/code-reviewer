@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Zap } from "lucide-react"
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons"
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Zap } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 
 export const CodeCarousel = () => {
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const codeExamples = [
     {
@@ -14,7 +14,8 @@ export const CodeCarousel = () => {
       code: `function validateUser(input) {
   return eval(input.userCode);
 }`,
-      aiComment: "🚨 Security vulnerability: eval() can execute arbitrary code. Use JSON.parse() instead.",
+      aiComment:
+        "🚨 Security vulnerability: eval() can execute arbitrary code. Use JSON.parse() instead.",
       type: "security",
     },
     {
@@ -24,7 +25,8 @@ export const CodeCarousel = () => {
   for item in items:
     result.append(expensive_operation(item))
   return result`,
-      aiComment: "⚡ Performance: Use list comprehension or map() for better performance.",
+      aiComment:
+        "⚡ Performance: Use list comprehension or map() for better performance.",
       type: "performance",
     },
     {
@@ -41,17 +43,21 @@ const user: User = {
       aiComment: "🐛 Type error: Property 'age' is missing in type assignment.",
       type: "bug",
     },
-  ]
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % codeExamples.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [])
+      setCurrentSlide((prev) => (prev + 1) % codeExamples.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [codeExamples.length]);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % codeExamples.length)
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + codeExamples.length) % codeExamples.length)
+  const nextSlide = () =>
+    setCurrentSlide((prev) => (prev + 1) % codeExamples.length);
+  const prevSlide = () =>
+    setCurrentSlide(
+      (prev) => (prev - 1 + codeExamples.length) % codeExamples.length,
+    );
 
   return (
     <div className="relative bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
@@ -60,7 +66,9 @@ const user: User = {
           <div className="w-3 h-3 bg-red-500 rounded-full"></div>
           <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span className="text-gray-400 ml-2 font-mono text-sm">{codeExamples[currentSlide].title}</span>
+          <span className="text-gray-400 ml-2 font-mono text-sm">
+            {codeExamples[currentSlide].title}
+          </span>
         </div>
         <div className="flex gap-2">
           <button onClick={prevSlide} className="p-1 hover:bg-gray-700 rounded">
@@ -73,7 +81,9 @@ const user: User = {
       </div>
 
       <div className="font-mono text-sm mb-4">
-        <pre className="text-gray-300 whitespace-pre-wrap">{codeExamples[currentSlide].code}</pre>
+        <pre className="text-gray-300 whitespace-pre-wrap">
+          {codeExamples[currentSlide].code}
+        </pre>
       </div>
 
       <div className="bg-gradient-to-r from-violet-900/30 to-cyan-900/30 border border-violet-500/30 rounded-lg p-4 animate-fade-in">
@@ -93,7 +103,9 @@ const user: User = {
             {codeExamples[currentSlide].type}
           </Badge>
         </div>
-        <p className="text-gray-300 text-sm">{codeExamples[currentSlide].aiComment}</p>
+        <p className="text-gray-300 text-sm">
+          {codeExamples[currentSlide].aiComment}
+        </p>
       </div>
 
       <div className="flex justify-center gap-2 mt-4">
@@ -106,5 +118,5 @@ const user: User = {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,11 +1,10 @@
-
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export enum AIModel {
-  GEMINI = 'GEMINI',
-  CHATGPT = 'CHATGPT',
-  CLAUDE = 'CLAUDE',
-  DEEPSEEK = 'DEEPSEEK',
+  GEMINI = "GEMINI",
+  CHATGPT = "CHATGPT",
+  CLAUDE = "CLAUDE",
+  DEEPSEEK = "DEEPSEEK",
 }
 
 export interface Review {
@@ -76,7 +75,7 @@ export interface ProjectSettings {
   project?: Project;
   aiModel: string;
   codeLanguages: string[];
-  reviewDepth: 'basic' | 'standard' | 'comprehensive';
+  reviewDepth: "basic" | "standard" | "comprehensive";
   autoReviewEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -97,8 +96,8 @@ export interface ReviewResult {
   suggestion: string;
   lineStart?: number | null;
   lineEnd?: number | null;
-  severity: 'info' | 'warning' | 'error';
-  status: 'open' | 'fixed' | 'ignored';
+  severity: "info" | "warning" | "error";
+  status: "open" | "fixed" | "ignored";
   fixedAt?: Date | null;
   fixedByUserId?: string | null;
   createdAt: Date;
@@ -124,7 +123,7 @@ export interface TeamMember {
   team?: Team;
   userId: string;
   user?: UserProfile;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
+  role: "owner" | "admin" | "member" | "viewer";
   joinedAt: Date;
   updatedAt: Date;
 }
@@ -134,9 +133,9 @@ export interface Invitation {
   teamId: string;
   team?: Team;
   email: string;
-  role: 'admin' | 'member' | 'viewer';
+  role: "admin" | "member" | "viewer";
   token: string;
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  status: "pending" | "accepted" | "declined" | "expired";
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -163,7 +162,7 @@ export interface Subscription {
   profile?: UserProfile;
   planId: string;
   planName: string;
-  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  status: "active" | "canceled" | "past_due" | "trialing";
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
@@ -193,18 +192,41 @@ export interface Notification {
   title: string;
   message: string;
   isRead: boolean;
-  data?: any;
+  data?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // NavigationPage type might be more relevant for client-side routing if not using Next.js pages for everything.
-export type NavigationPage = 'reviewer' | 'profile' | 'projects' | 'teams' | 'billing' | 'login';
+export type NavigationPage =
+  | "reviewer"
+  | "profile"
+  | "projects"
+  | "teams"
+  | "billing"
+  | "login";
+
+// ReviewResultStats is used for project statistics
+export interface ReviewResultStats {
+  totalResults: number;
+  openCount: number;
+  fixedCount: number;
+  ignoredCount: number;
+  severityCounts: {
+    info: number;
+    warning: number;
+    error: number;
+  };
+  fileStats: Array<{
+    fileName: string;
+    count: number;
+  }>;
+}
 
 // ActionResponse is a standardized structure for Server Action return values.
-export interface ActionResponse<T = any> {
+export interface ActionResponse<T = unknown> {
   success: boolean;
   message?: string; // Optional success or general message
-  data?: T;         // Optional data payload on success
-  error?: string | { message: string; details?: any }; // Optional error message or object on failure
+  data?: T; // Optional data payload on success
+  error?: string | { message: string; details?: unknown }; // Optional error message or object on failure
 }

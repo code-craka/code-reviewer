@@ -1,40 +1,44 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { Navigation as Navbar } from "@/components/navigation";
+import ProjectsClientPage from "./ProjectsClientPage";
+import prisma from "@/lib/prisma";
+import type { UserProfile, Project } from "@/types/index";
+import { motion } from "framer-motion"; // Import motion
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import { Navigation as Navbar } from '@/components/navigation';
-import ProjectsClientPage from './ProjectsClientPage';
-import prisma from '@/lib/prisma';
-import type { UserProfile, Project } from '@/types/index';
-import { motion } from 'framer-motion'; // Import motion
-
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const supabase = await createSupabaseServerClient();
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
   if (sessionError || !session) {
-    redirect('/login?next=/projects'); // Ensure redirect includes next path
+    redirect("/login?next=/projects"); // Ensure redirect includes next path
   }
   const { user } = session;
   let userProfile: UserProfile | null = null;
   let projects: Project[] = [];
 
   if (user) {
-    const profileResult = await prisma.profile.findUnique({ where: { id: user.id } });
+    const profileResult = await prisma.profile.findUnique({
+      where: { id: user.id },
+    });
     if (profileResult) {
       userProfile = profileResult as UserProfile;
     }
-    projects = await prisma.project.findMany({
+    projects = (await prisma.project.findMany({
       where: { ownerId: user.id },
-      orderBy: { updatedAt: 'desc' },
-    }) as Project[];
+      orderBy: { updatedAt: "desc" },
+    })) as Project[];
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen">
-       <Navbar 
-        initialUser={user ?? null} 
+      <Navbar
+        initialUser={user ?? null}
         profilePictureUrl={userProfile?.profilePictureUrl}
         username={userProfile?.username}
       />

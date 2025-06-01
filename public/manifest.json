@@ -1,28 +1,27 @@
 {
-    "name": "CodeReviewer AI",
-    "short_name": "CodeReviewer",
-    "description": "AI-powered code review tool that auto-detects bugs, security issues, and performance bottlenecks",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#0f0f23",
-    "theme_color": "#8b5cf6",
-    "orientation": "portrait-primary",
-    "icons": [
-      {
-        "src": "/icon-192.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "maskable"
-      },
-      {
-        "src": "/icon-512.png",
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "maskable"
-      }
-    ],
-    "categories": ["developer", "productivity", "utilities"],
-    "lang": "en",
-    "dir": "ltr"
-  }
-  
+  "name": "CodeReviewer AI",
+  "short_name": "CodeReviewer",
+  "description": "AI-powered code review tool that auto-detects bugs, security issues, and performance bottlenecks",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f23",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["developer", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
