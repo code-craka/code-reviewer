@@ -34,7 +34,8 @@ export async function getGeminiReviewAction(code: string): Promise<ActionRespons
       }
     });
     
-    const feedback = response.text;
+    // Ensure feedback is always a string, even if response.text is undefined
+    const feedback = response.text || '';
     let tokensUsed = 0;
     if (response.usageMetadata) {
       tokensUsed = (response.usageMetadata.promptTokenCount || 0) + (response.usageMetadata.candidatesTokenCount || 0);

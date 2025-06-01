@@ -128,8 +128,24 @@ export async function createReviewResult(formData: FormData): Promise<ActionResp
   const suggestion = formData.get('suggestion') as string;
   const lineStart = formData.get('lineStart') ? parseInt(formData.get('lineStart') as string) : undefined;
   const lineEnd = formData.get('lineEnd') ? parseInt(formData.get('lineEnd') as string) : undefined;
-  const severity = formData.get('severity') as 'critical' | 'major' | 'minor' | 'info';
-  const category = formData.get('category') as string;
+  // Map the form severity values to the expected service enum values
+  const formSeverity = formData.get('severity') as 'critical' | 'major' | 'minor' | 'info';
+  // Map the form severity to the service severity
+  let severity: 'info' | 'warning' | 'error';
+  switch (formSeverity) {
+    case 'critical':
+      severity = 'error';
+      break;
+    case 'major':
+      severity = 'warning';
+      break;
+    case 'minor':
+    case 'info':
+    default:
+      severity = 'info';
+      break;
+  }
+  // We don't need category as it's not used in the service function
 
   if (!reviewId || !projectId || !fileName || !suggestion) {
     return { 
@@ -166,8 +182,9 @@ export async function createReviewResult(formData: FormData): Promise<ActionResp
     }
 
     // Create the review result
-    const result = await reviewResultService.createReviewResult({
+    const result = await reviewResultService.createReviewResult(
       reviewId,
+      user.id, // authorId
       projectId,
       fileName,
       filePath,
@@ -176,10 +193,8 @@ export async function createReviewResult(formData: FormData): Promise<ActionResp
       suggestion,
       lineStart,
       lineEnd,
-      severity,
-      category,
-      createdById: user.id
-    });
+      severity
+    );
     
     revalidatePath(`/projects/${projectId}/reviews/${reviewId}`);
     

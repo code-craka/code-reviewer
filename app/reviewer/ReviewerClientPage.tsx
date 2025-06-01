@@ -3,7 +3,7 @@
 
 import React, { useState, useCallback, useEffect, useTransition, FormEvent } from 'react';
 import { User } from '@supabase/supabase-js';
-import { AIModel, ReviewResults, Project as ProjectType, Review, AIModelOption } from '@/types/index'; // Added AIModelOption and Review
+import { AIModel, ReviewResults, Project as ProjectType, Review } from '@/types/index'; // Added Review
 import { AI_MODELS_OPTIONS } from '@/lib/constants';
 import { getGeminiReviewAction, GeminiReviewData } from '@/app/actions/geminiActions';
 import { getMockReview, MockReviewResponse } from '@/services/mockAIService';
@@ -14,7 +14,7 @@ import ModelSelector from '@/components/review/ModelSelector';
 import ReviewOutput from '@/components/review/ReviewOutput';
 import Spinner from '@/components/ui/spinner';
 import AlertComponent from '@/components/ui/customalert'; // Renamed to avoid conflict
-import { Save, FolderPlus, RotateCcw, Settings2, X } from 'lucide-react'; // Added Settings2, X
+import { Save, FolderPlus, RotateCcw } from 'lucide-react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+// cn import removed as it's not being used
 
 interface ReviewerClientPageProps {
   user: User;

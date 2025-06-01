@@ -5,8 +5,8 @@ import React, { useState, useEffect, useTransition, FormEvent } from 'react';
 import { UserProfile, ActionResponse } from '@/types/index';
 import Spinner from '@/components/ui/spinner';
 import AlertComponent from '@/components/ui/customalert';
-import { Edit3, Save, ShieldCheck, BarChart3, Image as LucideImage, User, X } from 'lucide-react'; // Replaced UserCircle2, Added X
-import NextImage from 'next/image';
+import { Edit3, Save, ShieldCheck, BarChart3, Image as LucideImage, X } from 'lucide-react'; // Replaced UserCircle2, Added X
+// NextImage import removed as it's not being used
 import { MOCK_AVATAR_URL_BASE } from '@/lib/constants';
 import { updateProfileServerAction } from './actions'; 
 import { Button } from '@/components/ui/button';

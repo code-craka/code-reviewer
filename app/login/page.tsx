@@ -5,11 +5,25 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion'; // Import motion
 
-export default async function LoginPage({ searchParams }: { searchParams: { next?: string, message?: string, error?: string }}) {
+type SearchParamsType = { 
+  next?: string | string[], 
+  message?: string | string[], 
+  error?: string | string[] 
+};
+
+type PageProps = {
+  searchParams: Promise<SearchParamsType>;
+};
+
+export default async function LoginPage({ searchParams }: PageProps) {
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  const nextPath = searchParams.next || '/reviewer';
+  // Await the searchParams promise in Next.js 15
+  const params = await searchParams;
+  
+  // Handle both string and string[] types for query parameters
+  const nextPath = typeof params.next === 'string' ? params.next : Array.isArray(params.next) ? params.next[0] : '/reviewer';
 
   if (session) {
     redirect(nextPath); 
@@ -30,7 +44,10 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
           </Link>
         </Button>
       </div>
-      <AuthForm initialMessage={searchParams.message} initialError={searchParams.error} />
+      <AuthForm 
+        initialMessage={typeof params.message === 'string' ? params.message : Array.isArray(params.message) ? params.message[0] : undefined} 
+        initialError={typeof params.error === 'string' ? params.error : Array.isArray(params.error) ? params.error[0] : undefined} 
+      />
     </motion.div>
   );
 }

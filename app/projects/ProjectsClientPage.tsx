@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition, FormEvent, useCallback } from 'react';
-import { Project, ActionResponse } from '@/types/index';
+import { Project } from '@/types/index';
 import { createNewProject, updateExistingProject, deleteExistingProject, getUserProjects } from '@/app/actions/projectActions';
 import Spinner from '@/components/ui/spinner';
 import AlertComponent from '@/components/ui/customalert';
@@ -234,7 +234,7 @@ const ProjectsClientPage: React.FC<ProjectsClientPageProps> = ({ initialProjects
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground mb-4 h-12 overflow-hidden">
-                      {project.code.substring(0, 100) || "No code yet..."}{project.code.length > 100 ? '...' : ''}
+                      {project.code ? (project.code.substring(0, 100) + (project.code.length > 100 ? '...' : '')) : "No code yet..."}
                     </p>
                   </CardContent>
                   <CardFooter className="flex flex-col sm:flex-row gap-2">
