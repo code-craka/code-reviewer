@@ -63,7 +63,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         </CardHeader>
         <CardContent>
           {review.results?.length > 0 ? (
-            <ReviewResults results={review.results} reviewId={review.id} />
+            <ReviewResults review={review} />
           ) : (
             <p>No review results found.</p>
           )}

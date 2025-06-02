@@ -1,9 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import type { RAGResponse } from '@/lib/services/rag-service';
 import type {
-  RAGResponse,
   ReviewRequest,
-  SimilaritySearchResult,
-  CreateReviewRequestInput
+  SimilaritySearchResult
 } from '@/types/rag';
 
 interface RAGPipelineRequest {
@@ -59,10 +58,7 @@ export class RAGClient {
       if (!session) {
         return {
           success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'User not authenticated'
-          }
+          error: 'User not authenticated'
         };
       }
 
@@ -90,11 +86,7 @@ export class RAGClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: {
-            code: 'RAG_PIPELINE_ERROR',
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            details: errorText
-          }
+          error: `Edge Function error: ${response.status} - ${errorText}`
         };
       }
 
@@ -103,10 +95,7 @@ export class RAGClient {
       if (!result.success) {
         return {
           success: false,
-          error: {
-            code: 'RAG_PIPELINE_FAILED',
-            message: result.error || 'Pipeline execution failed'
-          }
+          error: result.error
         };
       }
 
@@ -117,11 +106,7 @@ export class RAGClient {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'NETWORK_ERROR',
-          message: 'Failed to connect to RAG pipeline',
-          details: error
-        }
+        error: `Failed to initialize review: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -143,10 +128,7 @@ export class RAGClient {
       if (!session) {
         return {
           success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'User not authenticated'
-          }
+          error: 'User not authenticated'
         };
       }
 
@@ -174,11 +156,7 @@ export class RAGClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: {
-            code: 'SEARCH_ERROR',
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            details: errorText
-          }
+          error: `Edge Function error: ${response.status} - ${errorText}`
         };
       }
 
@@ -187,10 +165,7 @@ export class RAGClient {
       if (!result.success) {
         return {
           success: false,
-          error: {
-            code: 'SEARCH_FAILED',
-            message: result.error || 'Search failed'
-          }
+          error: result.error
         };
       }
 
@@ -201,11 +176,7 @@ export class RAGClient {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'NETWORK_ERROR',
-          message: 'Failed to search similar reviews',
-          details: error
-        }
+        error: `Failed to search similar reviews: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -227,10 +198,7 @@ export class RAGClient {
       if (!session) {
         return {
           success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'User not authenticated'
-          }
+          error: 'User not authenticated'
         };
       }
 
@@ -260,11 +228,7 @@ export class RAGClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: {
-            code: 'COMPLETE_REVIEW_ERROR',
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            details: errorText
-          }
+          error: `Edge Function error: ${response.status} - ${errorText}`
         };
       }
 
@@ -273,10 +237,7 @@ export class RAGClient {
       if (!result.success) {
         return {
           success: false,
-          error: {
-            code: 'COMPLETE_REVIEW_FAILED',
-            message: result.error || 'Failed to complete review'
-          }
+          error: result.error
         };
       }
 
@@ -284,11 +245,7 @@ export class RAGClient {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'NETWORK_ERROR',
-          message: 'Failed to complete review',
-          details: error
-        }
+        error: `Failed to complete review: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -306,10 +263,7 @@ export class RAGClient {
       if (!session) {
         return {
           success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'User not authenticated'
-          }
+          error: 'User not authenticated'
         };
       }
 
@@ -333,11 +287,7 @@ export class RAGClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: {
-            code: 'EMBEDDING_ERROR',
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            details: errorText
-          }
+          error: `Edge Function error: ${response.status} - ${errorText}`
         };
       }
 
@@ -346,10 +296,7 @@ export class RAGClient {
       if (!result.success) {
         return {
           success: false,
-          error: {
-            code: 'EMBEDDING_FAILED',
-            message: result.error || 'Failed to generate embedding'
-          }
+          error: result.error
         };
       }
 
@@ -360,11 +307,7 @@ export class RAGClient {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'NETWORK_ERROR',
-          message: 'Failed to generate embedding',
-          details: error
-        }
+        error: `Failed to generate embedding: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -399,11 +342,7 @@ export class RAGClient {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'ANALYTICS_QUERY_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -414,11 +353,7 @@ export class RAGClient {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'ANALYTICS_ERROR',
-          message: 'Failed to fetch analytics',
-          details: error
-        }
+        error: `Failed to fetch analytics: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }

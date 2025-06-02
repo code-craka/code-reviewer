@@ -102,7 +102,10 @@ export async function updateExistingProject(
 
   const updates: Partial<Record<string, string>> = {};
   if (name && name.trim() !== "") updates.name = name.trim();
-  if (typeof code === "string") updates.code = code;
+  if (typeof code === "string" && code.trim() !== "") {
+    // Store code content in description field since Project model doesn't have 'code' field
+    updates.description = code.trim();
+  }
 
   if (Object.keys(updates).length === 0) {
     return { success: false, error: "No updates provided" };

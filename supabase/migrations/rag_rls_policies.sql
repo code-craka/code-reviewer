@@ -4,17 +4,25 @@ ALTER TABLE cr_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cr_embeddings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE review_analytics ENABLE ROW LEVEL SECURITY;
 
+-- Helper function to get current user's profile ID
+CREATE OR REPLACE FUNCTION get_current_profile_id()
+RETURNS TEXT AS $$
+BEGIN
+    RETURN auth.uid()::text;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Helper function to check if user can access project
-CREATE OR REPLACE FUNCTION can_access_project_for_review(project_uuid UUID)
+CREATE OR REPLACE FUNCTION can_access_project_for_review(project_text TEXT)
 RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
-        SELECT 1 FROM projects p
-        LEFT JOIN team_members tm ON p.team_id = tm.team_id
-        WHERE p.id = project_uuid
+        SELECT 1 FROM "Project" p
+        LEFT JOIN "TeamMember" tm ON p."teamId" = tm."teamId"
+        WHERE p.id = project_text
         AND (
-            p.owner_id = get_current_profile_id()
-            OR tm.profile_id = get_current_profile_id()
+            p."ownerId" = get_current_profile_id()
+            OR tm."profileId" = get_current_profile_id()
         )
     );
 END;

@@ -12,9 +12,9 @@ CREATE TYPE ai_model_type AS ENUM ('gpt-4o', 'claude-3.5-sonnet', 'gpt-4-turbo',
 
 -- Review requests table - stores diff metadata and review context
 CREATE TABLE review_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    project_id TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
+    profile_id TEXT NOT NULL REFERENCES "Profile"(id) ON DELETE CASCADE,
     
     -- Git/diff context
     commit_hash VARCHAR(40),
@@ -41,10 +41,10 @@ CREATE TABLE review_requests (
 
 -- CR messages table - stores all review comments and AI responses
 CREATE TABLE cr_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    review_request_id UUID NOT NULL REFERENCES review_requests(id) ON DELETE CASCADE,
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    review_request_id TEXT NOT NULL REFERENCES review_requests(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
+    profile_id TEXT NOT NULL REFERENCES "Profile"(id) ON DELETE CASCADE,
     
     -- Message content
     content TEXT NOT NULL,
@@ -75,9 +75,9 @@ CREATE TABLE cr_messages (
 
 -- CR embeddings table - pgvector embeddings for similarity search
 CREATE TABLE cr_embeddings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    message_id UUID NOT NULL REFERENCES cr_messages(id) ON DELETE CASCADE,
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    message_id TEXT NOT NULL REFERENCES cr_messages(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
     
     -- Embedding data
     embedding vector(1536), -- OpenAI text-embedding-3-large dimension
@@ -100,9 +100,9 @@ CREATE TABLE cr_embeddings (
 
 -- Review analytics table - track performance and costs
 CREATE TABLE review_analytics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    project_id TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
+    profile_id TEXT NOT NULL REFERENCES "Profile"(id) ON DELETE CASCADE,
     
     -- Performance metrics
     date DATE NOT NULL,

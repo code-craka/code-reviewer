@@ -1,18 +1,30 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createHash } from 'crypto';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type {
-  ReviewRequest,
-  CRMessage,
-  CREmbedding,
-  CreateReviewRequestInput,
-  CreateCRMessageInput,
-  CreateEmbeddingInput,
-  SimilaritySearchQuery,
-  SimilaritySearchResult,
-  CacheResult,
-  RAGResponse,
-  ReviewAnalytics
-} from '@/types/rag';
+
+export interface RAGRequest {
+  id: string;
+  projectId: string;
+  profileId: string;
+  contentHash: string;
+  language?: string;
+  filePath?: string;
+  createdAt: string;
+}
+
+export interface SimilaritySearchResult {
+  reviewId: string;
+  similarity: number;
+  content: string;
+  createdAt: string;
+}
+
+export interface RAGResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  cacheHit?: boolean;
+  similarReviews?: SimilaritySearchResult[];
+}
 
 export class RAGService {
   private supabase: any;
@@ -25,18 +37,13 @@ export class RAGService {
     this.supabase = await createSupabaseServerClient();
   }
 
-  // Utility function to generate content hash
-  private generateContentHash(content: string): string {
-    return createHash('sha256').update(content).digest('hex');
-  }
-
   // Utility function to generate diff hash
   private generateDiffHash(diffContent: string): string {
     return createHash('sha256').update(diffContent).digest('hex');
   }
 
   // Create a new review request
-  async createReviewRequest(input: CreateReviewRequestInput): Promise<RAGResponse<ReviewRequest>> {
+  async createReviewRequest(input: any): Promise<RAGResponse<any>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -54,11 +61,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'CREATE_REVIEW_REQUEST_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -69,17 +72,13 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to create review request',
-          details: error
-        }
+        error: 'Failed to create review request'
       };
     }
   }
 
   // Check for similar review requests (cache hit detection)
-  async findSimilarReviews(query: SimilaritySearchQuery): Promise<RAGResponse<SimilaritySearchResult[]>> {
+  async findSimilarReviews(query: any): Promise<RAGResponse<SimilaritySearchResult[]>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -112,19 +111,16 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'SIMILARITY_SEARCH_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
       // Calculate similarity scores and format results
       const results: SimilaritySearchResult[] = data.map((item: any) => ({
-        message: item.cr_messages,
-        embedding: item,
-        similarity_score: this.calculateSimilarityScore(query.embedding, item.embedding)
+        reviewId: item.id,
+        similarity: this.calculateSimilarityScore(query.embedding, item.embedding),
+        content: item.content,
+        createdAt: item.created_at
       }));
 
       return {
@@ -134,17 +130,13 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to search similar reviews',
-          details: error
-        }
+        error: 'Failed to search similar reviews'
       };
     }
   }
 
   // Create a new message
-  async createMessage(input: CreateCRMessageInput): Promise<RAGResponse<CRMessage>> {
+  async createMessage(input: any): Promise<RAGResponse<any>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -157,11 +149,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'CREATE_MESSAGE_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -172,17 +160,13 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to create message',
-          details: error
-        }
+        error: 'Failed to create message'
       };
     }
   }
 
   // Create embedding for a message
-  async createEmbedding(input: CreateEmbeddingInput): Promise<RAGResponse<CREmbedding>> {
+  async createEmbedding(input: any): Promise<RAGResponse<any>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -201,11 +185,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'CREATE_EMBEDDING_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -216,11 +196,7 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to create embedding',
-          details: error
-        }
+        error: 'Failed to create embedding'
       };
     }
   }
@@ -230,7 +206,7 @@ export class RAGService {
     id: string, 
     status: 'pending' | 'in_progress' | 'completed' | 'failed',
     cacheHit?: boolean
-  ): Promise<RAGResponse<ReviewRequest>> {
+  ): Promise<RAGResponse<any>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -252,11 +228,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'UPDATE_STATUS_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -267,17 +239,13 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to update review status',
-          details: error
-        }
+        error: 'Failed to update review status'
       };
     }
   }
 
   // Get review request with messages
-  async getReviewWithMessages(reviewId: string): Promise<RAGResponse<ReviewRequest & { messages: CRMessage[] }>> {
+  async getReviewWithMessages(reviewId: string): Promise<RAGResponse<any>> {
     try {
       if (!this.supabase) await this.initSupabase();
 
@@ -293,11 +261,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'GET_REVIEW_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -311,11 +275,7 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to get review with messages',
-          details: error
-        }
+        error: 'Failed to get review with messages'
       };
     }
   }
@@ -336,11 +296,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'UPDATE_USAGE_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -348,11 +304,7 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to update embedding usage',
-          details: error
-        }
+        error: 'Failed to update embedding usage'
       };
     }
   }
@@ -361,7 +313,7 @@ export class RAGService {
   async recordAnalytics(
     projectId: string,
     profileId: string,
-    metrics: Partial<ReviewAnalytics>
+    metrics: any
   ): Promise<RAGResponse<void>> {
     try {
       if (!this.supabase) await this.initSupabase();
@@ -382,11 +334,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'RECORD_ANALYTICS_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -394,11 +342,7 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to record analytics',
-          details: error
-        }
+        error: 'Failed to record analytics'
       };
     }
   }
@@ -446,11 +390,7 @@ export class RAGService {
       if (error) {
         return {
           success: false,
-          error: {
-            code: 'CLEANUP_FAILED',
-            message: error.message,
-            details: error
-          }
+          error: error.message
         };
       }
 
@@ -458,11 +398,7 @@ export class RAGService {
     } catch (error) {
       return {
         success: false,
-        error: {
-          code: 'UNEXPECTED_ERROR',
-          message: 'Failed to cleanup old data',
-          details: error
-        }
+        error: 'Failed to cleanup old data'
       };
     }
   }

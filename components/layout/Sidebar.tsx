@@ -31,6 +31,7 @@ interface SidebarProps {
 }
 
 interface NavItem {
+  id: string;
   label: string;
   href: string;
   icon: React.ElementType;
@@ -40,51 +41,61 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
+    id: "dashboard",
     label: "Dashboard",
     href: "/dashboard",
     icon: Home,
   },
   {
+    id: "ai-reviewer",
     label: "AI Reviewer",
     href: "/reviewer",
     icon: FileText,
   },
   {
+    id: "projects",
     label: "Projects",
     href: "/dashboard",
     icon: FolderOpen,
   },
   {
+    id: "ai-chat",
     label: "AI Chat",
     href: "/chat",
     icon: MessageSquare,
   },
   {
+    id: "analytics",
     label: "Analytics",
     href: "/analytics",
     icon: BarChart3,
   },
   {
+    id: "teams",
     label: "Teams",
     href: "/teams",
     icon: Users,
   },
   {
+    id: "api-keys",
     label: "API Keys",
     href: "/api-keys",
     icon: Key,
   },
   {
+    id: "notifications",
     label: "Notifications",
     href: "/notifications",
     icon: Bell,
   },
   {
+    id: "settings",
     label: "Settings",
     href: "/settings",
     icon: Settings,
   },
   {
+    id: "admin-panel",
     label: "Admin Panel",
     href: "/admin",
     icon: Crown,
@@ -92,6 +103,7 @@ const navItems: NavItem[] = [
     badge: "Admin"
   },
   {
+    id: "help-support",
     label: "Help & Support",
     href: "/help",
     icon: HelpCircle,
@@ -204,7 +216,7 @@ function SidebarContent({
 
           return (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               onClick={onItemClick}
               className={cn(

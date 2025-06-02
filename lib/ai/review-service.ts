@@ -13,7 +13,6 @@ import {
 import { generateReview } from "./models";
 import { v4 as uuidv4 } from "uuid";
 import { ragClient } from "../services/rag-client";
-import { embeddingService } from "../services/embedding-service";
 import type { SimilaritySearchResult } from "@/types/rag";
 
 // Define available AI models
@@ -223,7 +222,7 @@ export class ReviewService {
           });
         } else {
           logger.warn("RAG pipeline initialization failed", {
-            error: ragResult.error?.message,
+            error: ragResult.error,
             fallbackToStandardFlow: true
           });
         }
@@ -470,10 +469,10 @@ export class ReviewService {
       }
 
       // Make sure to properly type the enum fields in the results
-      const typedResults = results.map((result) => ({
+      const typedResults = results.map((result: any) => ({
         ...result,
-        severity: result.severity as ReviewSeverity,
-        status: result.status as ReviewStatus,
+        severity: (result as any).severity as ReviewSeverity,
+        status: (result as any).status as ReviewStatus,
       }));
 
       // Combine and return the full review with typed fields
@@ -791,10 +790,10 @@ export class ReviewService {
       return reviews.map((review) => ({
         ...review,
         depth: review.depth as ReviewDepth,
-        results: (review.results || []).map((result: unknown) => ({
+        results: (review.results || []).map((result: any) => ({
           ...result,
-          severity: result.severity as ReviewSeverity,
-          status: result.status as ReviewStatus,
+          severity: (result as any).severity as ReviewSeverity,
+          status: (result as any).status as ReviewStatus,
         })),
         stats: this.calculateReviewStats(review.results || []),
       })) as Review[];

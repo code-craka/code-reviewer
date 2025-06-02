@@ -48,13 +48,8 @@ export const Navigation = ({
   };
 
   const handleSignIn = async () => {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reviewer`,
-      },
-    });
+    // Redirect to login page instead of directly triggering OAuth
+    window.location.href = '/login';
   };
 
   // Reset image error when profilePictureUrl changes

@@ -25,13 +25,11 @@ import {
 import {
   Send,
   Bot,
-  User,
   MoreHorizontal,
   Trash2,
   Download,
   Copy,
   Plus,
-  History,
   Code,
   FileText,
   HelpCircle,
@@ -230,10 +228,13 @@ Is there a specific area you'd like me to dive deeper into?`,
       {/* Sidebar - Conversation History */}
       <div className="w-80 border-r bg-muted/10 flex flex-col">
         <div className="p-4 border-b">
-          <Button onClick={createNewConversation} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            New Chat
-          </Button>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Conversations</h2>
+            <Button onClick={createNewConversation} className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              New Chat
+            </Button>
+          </div>
         </div>
         
         <ScrollArea className="flex-1 p-4">

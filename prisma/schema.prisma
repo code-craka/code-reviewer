@@ -1,258 +1,404 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model Profile {
-  id                 String            @id
-  email              String            @unique
-  username           String            @unique
-  profilePictureUrl  String?
-  bio                String?
-  role               String            @default("user") // user, admin
-  isActive           Boolean           @default(true)
-  lastLoginAt        DateTime?
-  onboardingCompleted Boolean          @default(false)
-  preferences        Json              @default("{}")
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  projects           Project[]         @relation("ProjectOwner")
-  reviews            Review[]          @relation("ReviewAuthor")
-  reviewResults      ReviewResult[]    @relation("ReviewResultAuthor")
-  teamMemberships    TeamMember[]      @relation("TeamMember")
-  ownedTeams         Team[]            @relation("TeamOwner")
-  billingDetails     BillingDetail?    @relation("ProfileBilling")
-  subscriptions      Subscription[]    @relation("ProfileSubscription")
-  apiKeys            ApiKey[]          @relation("ProfileApiKey")
-  notifications      Notification[]    @relation("ProfileNotification")
-  conversations      Conversation[]    @relation("ProfileConversations")
-  usageMetrics       UsageMetrics[]    @relation("ProfileUsageMetrics")
+  id                  String             @id
+  email               String             @unique
+  username            String             @unique
+  profilePictureUrl   String?
+  bio                 String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  isActive            Boolean            @default(true)
+  lastLoginAt         DateTime?
+  onboardingCompleted Boolean            @default(false)
+  preferences         Json               @default("{}")
+  role                String             @default("user")
+  apiKeys             ApiKey[]           @relation("ProfileApiKey")
+  billingDetails      BillingDetail?     @relation("ProfileBilling")
+  conversations       Conversation[]     @relation("ProfileConversations")
+  notifications       Notification[]     @relation("ProfileNotification")
+  projects            Project[]          @relation("ProjectOwner")
+  reviews             Review[]           @relation("ReviewAuthor")
+  reviewResults       ReviewResult[]     @relation("ReviewResultAuthor")
+  subscriptions       Subscription[]     @relation("ProfileSubscription")
+  ownedTeams          Team[]             @relation("TeamOwner")
+  teamMemberships     TeamMember[]       @relation("TeamMember")
+  usageMetrics        UsageMetrics[]     @relation("ProfileUsageMetrics")
+  cr_messages         cr_messages[]
+  review_analytics    review_analytics[]
+  review_requests     review_requests[]
 }
 
 model Project {
-  id                String          @id @default(uuid())
-  name              String
-  description       String?
-  repositoryUrl     String?
-  ownerId           String
-  owner             Profile         @relation("ProjectOwner", fields: [ownerId], references: [id])
-  reviews           Review[]        @relation("ProjectReviews")
-  reviewResults     ReviewResult[]  @relation("ProjectReviewResults")
-  teamId            String?
-  team              Team?           @relation("TeamProjects", fields: [teamId], references: [id])
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  settings          ProjectSettings?
+  id               String             @id @default(uuid())
+  name             String
+  description      String?
+  repositoryUrl    String?
+  ownerId          String
+  teamId           String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  owner            Profile            @relation("ProjectOwner", fields: [ownerId], references: [id])
+  team             Team?              @relation("TeamProjects", fields: [teamId], references: [id])
+  settings         ProjectSettings?
+  reviews          Review[]           @relation("ProjectReviews")
+  reviewResults    ReviewResult[]     @relation("ProjectReviewResults")
+  cr_embeddings    cr_embeddings[]
+  cr_messages      cr_messages[]
+  review_analytics review_analytics[]
+  review_requests  review_requests[]
 }
 
 model ProjectSettings {
-  id                String    @id @default(uuid())
-  projectId         String    @unique
-  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  aiModel           String    @default("gemini-pro")
-  codeLanguages     String[]  @default(["javascript", "typescript"])
-  reviewDepth       String    @default("standard") // basic, standard, comprehensive
-  autoReviewEnabled Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                String   @id @default(uuid())
+  projectId         String   @unique
+  aiModel           String   @default("gemini-pro")
+  codeLanguages     String[] @default(["javascript", "typescript"])
+  reviewDepth       String   @default("standard")
+  autoReviewEnabled Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Review {
-  id              String          @id @default(uuid())
-  projectId       String
-  project         Project         @relation("ProjectReviews", fields: [projectId], references: [id])
-  authorId        String
-  author          Profile         @relation("ReviewAuthor", fields: [authorId], references: [id])
-  content         String
-  reviewResults   ReviewResult[]  @relation("ReviewToResults")
-  
-  // RAG pipeline metadata
-  ragReviewRequestId    String?
-  cacheHit             Boolean      @default(false)
-  similarReviewsCount  Int          @default(0)
-  
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                  String         @id @default(uuid())
+  projectId           String
+  authorId            String
+  content             String
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  ragReviewRequestId  String?
+  cacheHit            Boolean        @default(false)
+  similarReviewsCount Int            @default(0)
+  author              Profile        @relation("ReviewAuthor", fields: [authorId], references: [id])
+  project             Project        @relation("ProjectReviews", fields: [projectId], references: [id])
+  reviewResults       ReviewResult[] @relation("ReviewToResults")
 }
 
 model ReviewResult {
-  id              String    @id @default(uuid())
-  reviewId        String
-  review          Review    @relation("ReviewToResults", fields: [reviewId], references: [id])
-  authorId        String
-  author          Profile   @relation("ReviewResultAuthor", fields: [authorId], references: [id])
-  projectId       String
-  project         Project   @relation("ProjectReviewResults", fields: [projectId], references: [id])
-  fileName        String
-  filePath        String
-  codeSnippet     String
-  aiModel         String
-  suggestion      String
-  lineStart       Int?
-  lineEnd         Int?
-  severity        String    @default("info") // info, warning, error
-  status          String    @default("open") // open, fixed, ignored
-  fixedAt         DateTime?
-  fixedByUserId   String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(uuid())
+  reviewId      String
+  authorId      String
+  projectId     String
+  fileName      String
+  filePath      String
+  codeSnippet   String
+  aiModel       String
+  suggestion    String
+  lineStart     Int?
+  lineEnd       Int?
+  severity      String    @default("info")
+  status        String    @default("open")
+  fixedAt       DateTime?
+  fixedByUserId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        Profile   @relation("ReviewResultAuthor", fields: [authorId], references: [id])
+  project       Project   @relation("ProjectReviewResults", fields: [projectId], references: [id])
+  review        Review    @relation("ReviewToResults", fields: [reviewId], references: [id])
 }
 
 model Team {
-  id              String        @id @default(uuid())
-  name            String
-  description     String?
-  ownerId         String
-  owner           Profile       @relation("TeamOwner", fields: [ownerId], references: [id])
-  members         TeamMember[]  @relation("TeamMembers")
-  projects        Project[]     @relation("TeamProjects")
-  invitations     Invitation[]  @relation("TeamInvitations")
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  invitations Invitation[] @relation("TeamInvitations")
+  projects    Project[]    @relation("TeamProjects")
+  owner       Profile      @relation("TeamOwner", fields: [ownerId], references: [id])
+  members     TeamMember[] @relation("TeamMembers")
 }
 
 model TeamMember {
-  id              String    @id @default(uuid())
-  teamId          String
-  team            Team      @relation("TeamMembers", fields: [teamId], references: [id])
-  userId          String
-  user            Profile   @relation("TeamMember", fields: [userId], references: [id])
-  role            String    @default("member") // owner, admin, member, viewer
-  joinedAt        DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  team      Team     @relation("TeamMembers", fields: [teamId], references: [id])
+  user      Profile  @relation("TeamMember", fields: [userId], references: [id])
 
   @@unique([teamId, userId])
 }
 
 model Invitation {
-  id              String    @id @default(uuid())
-  teamId          String
-  team            Team      @relation("TeamInvitations", fields: [teamId], references: [id])
-  email           String
-  role            String    @default("member") // admin, member, viewer
-  token           String    @unique
-  status          String    @default("pending") // pending, accepted, declined, expired
-  expiresAt       DateTime
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String   @id @default(uuid())
+  teamId    String
+  email     String
+  role      String   @default("member")
+  token     String   @unique
+  status    String   @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  team      Team     @relation("TeamInvitations", fields: [teamId], references: [id])
 
   @@unique([teamId, email])
 }
 
 model BillingDetail {
-  id              String    @id @default(uuid())
-  profileId       String    @unique
-  profile         Profile   @relation("ProfileBilling", fields: [profileId], references: [id])
-  companyName     String?
-  address         String?
-  city            String?
-  state           String?
-  zipCode         String?
-  country         String?
-  taxId           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          String   @id @default(uuid())
+  profileId   String   @unique
+  companyName String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  taxId       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  profile     Profile  @relation("ProfileBilling", fields: [profileId], references: [id])
 }
 
 model Subscription {
-  id              String    @id @default(uuid())
-  profileId       String
-  profile         Profile   @relation("ProfileSubscription", fields: [profileId], references: [id])
-  planId          String
-  planName        String
-  status          String    @default("active") // active, canceled, past_due, trialing
+  id                 String   @id @default(uuid())
+  profileId          String
+  planId             String
+  planName           String
+  status             String   @default("active")
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   cancelAtPeriodEnd  Boolean  @default(false)
-  paymentMethod    String?
-  paymentId        String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  paymentMethod      String?
+  paymentId          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  profile            Profile  @relation("ProfileSubscription", fields: [profileId], references: [id])
 }
 
 model ApiKey {
-  id              String    @id @default(uuid())
-  profileId       String
-  profile         Profile   @relation("ProfileApiKey", fields: [profileId], references: [id])
-  name            String
-  key             String    @unique
-  provider        String    @default("platform") // platform, openai, anthropic, gemini
-  isCustom        Boolean   @default(false)
-  usage           Json      @default("{}")
-  limits          Json      @default("{}")
-  lastUsed        DateTime?
-  expiresAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String    @id @default(uuid())
+  profileId String
+  name      String
+  key       String    @unique
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isCustom  Boolean   @default(false)
+  limits    Json      @default("{}")
+  provider  String    @default("platform")
+  usage     Json      @default("{}")
+  profile   Profile   @relation("ProfileApiKey", fields: [profileId], references: [id])
 }
 
 model Notification {
-  id              String    @id @default(uuid())
-  profileId       String
-  profile         Profile   @relation("ProfileNotification", fields: [profileId], references: [id])
-  type            String    // team_invitation, review_completed, subscription_expiring, etc.
-  title           String
-  message         String
-  isRead          Boolean   @default(false)
-  data            Json?     // Additional data related to the notification
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String   @id @default(uuid())
+  profileId String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile   Profile  @relation("ProfileNotification", fields: [profileId], references: [id])
 }
 
 model Conversation {
-  id              String    @id @default(uuid())
-  profileId       String
-  profile         Profile   @relation("ProfileConversations", fields: [profileId], references: [id])
-  title           String
-  type            String    @default("general") // general, code_review, assistance
-  isArchived      Boolean   @default(false)
-  messages        Message[] @relation("ConversationMessages")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  profileId  String
+  title      String
+  type       String    @default("general")
+  isArchived Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  profile    Profile   @relation("ProfileConversations", fields: [profileId], references: [id])
+  messages   Message[] @relation("ConversationMessages")
 }
 
 model Message {
-  id              String       @id @default(uuid())
-  conversationId  String
-  conversation    Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
-  role            String       // user, assistant, system
-  content         String
-  metadata        Json         @default("{}")
-  cached          Boolean      @default(false)
-  cacheKey        String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id             String       @id @default(uuid())
+  conversationId String
+  role           String
+  content        String
+  metadata       Json         @default("{}")
+  cached         Boolean      @default(false)
+  cacheKey       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
 }
 
 model AnalyticsEvent {
-  id              String    @id @default(uuid())
-  profileId       String?
-  eventType       String
-  eventData       Json      @default("{}")
-  ipAddress       String?
-  userAgent       String?
-  createdAt       DateTime  @default(now())
+  id        String   @id @default(uuid())
+  profileId String?
+  eventType String
+  eventData Json     @default("{}")
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 }
 
 model UsageMetrics {
-  id              String    @id @default(uuid())
-  profileId       String
-  profile         Profile   @relation("ProfileUsageMetrics", fields: [profileId], references: [id])
-  date            DateTime  @db.Date
-  apiCalls        Int       @default(0)
-  tokensUsed      Int       @default(0)
+  id               String   @id @default(uuid())
+  profileId        String
+  date             DateTime @db.Date
+  apiCalls         Int      @default(0)
+  tokensUsed       Int      @default(0)
   reviewsGenerated Int      @default(0)
-  chatMessages    Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  chatMessages     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  profile          Profile  @relation("ProfileUsageMetrics", fields: [profileId], references: [id])
 
   @@unique([profileId, date])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cr_embeddings {
+  id                   String                 @id @default(dbgenerated("(gen_random_uuid())::text"))
+  message_id           String
+  project_id           String
+  embedding            Unsupported("vector")?
+  content_hash         String                 @db.VarChar(64)
+  file_path            String?
+  language             String?                @db.VarChar(50)
+  tags                 String[]
+  similarity_threshold Decimal?               @default(0.85) @db.Decimal(3, 2)
+  usage_count          Int?                   @default(0)
+  last_used_at         DateTime?              @db.Timestamptz(6)
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  cr_messages          cr_messages            @relation(fields: [message_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Project              Project                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([content_hash], map: "idx_cr_embeddings_content_hash")
+  @@index([file_path], map: "idx_cr_embeddings_file_path")
+  @@index([language], map: "idx_cr_embeddings_language")
+  @@index([message_id], map: "idx_cr_embeddings_message_id")
+  @@index([project_id, content_hash], map: "idx_cr_embeddings_project_content")
+  @@index([project_id], map: "idx_cr_embeddings_project_id")
+  @@index([usage_count(sort: Desc)], map: "idx_cr_embeddings_usage_count")
+  @@index([embedding], map: "idx_cr_embeddings_vector")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cr_messages {
+  id                 String          @id @default(dbgenerated("(gen_random_uuid())::text"))
+  review_request_id  String
+  project_id         String
+  profile_id         String
+  content            String
+  message_type       message_type
+  ai_model           ai_model_type?
+  file_path          String?
+  line_start         Int?
+  line_end           Int?
+  code_snippet       String?
+  language           String?         @db.VarChar(50)
+  token_count        Int?
+  generation_time_ms Int?
+  confidence_score   Decimal?        @db.Decimal(3, 2)
+  was_helpful        Boolean?
+  was_accepted       Boolean?
+  human_feedback     String?
+  created_at         DateTime?       @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?       @default(now()) @db.Timestamptz(6)
+  cr_embeddings      cr_embeddings[]
+  Profile            Profile         @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Project            Project         @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  review_requests    review_requests @relation(fields: [review_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at(sort: Desc)], map: "idx_cr_messages_created_at")
+  @@index([file_path], map: "idx_cr_messages_file_path")
+  @@index([language], map: "idx_cr_messages_language")
+  @@index([message_type], map: "idx_cr_messages_message_type")
+  @@index([profile_id, project_id], map: "idx_cr_messages_profile_project")
+  @@index([project_id], map: "idx_cr_messages_project_id")
+  @@index([review_request_id], map: "idx_cr_messages_review_request_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model review_analytics {
+  id                   String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  project_id           String
+  profile_id           String
+  date                 DateTime  @db.Date
+  total_reviews        Int?      @default(0)
+  cache_hits           Int?      @default(0)
+  cache_misses         Int?      @default(0)
+  avg_response_time_ms Int?      @default(0)
+  total_tokens_used    Int?      @default(0)
+  estimated_cost       Decimal?  @default(0.0000) @db.Decimal(10, 4)
+  gpt4o_calls          Int?      @default(0)
+  claude_calls         Int?      @default(0)
+  local_model_calls    Int?      @default(0)
+  avg_confidence_score Decimal?  @db.Decimal(3, 2)
+  helpful_reviews      Int?      @default(0)
+  total_feedback       Int?      @default(0)
+  created_at           DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime? @default(now()) @db.Timestamptz(6)
+  Profile              Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Project              Project   @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([project_id, profile_id, date])
+  @@index([date(sort: Desc)], map: "idx_review_analytics_date")
+  @@index([profile_id, project_id], map: "idx_review_analytics_profile_project")
+  @@index([project_id, date(sort: Desc)], map: "idx_review_analytics_project_date")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model review_requests {
+  id            String         @id @default(dbgenerated("(gen_random_uuid())::text"))
+  project_id    String
+  profile_id    String
+  commit_hash   String?        @db.VarChar(40)
+  branch_name   String?        @db.VarChar(255)
+  file_path     String
+  diff_content  String
+  diff_hash     String         @db.VarChar(64)
+  review_prompt String?
+  language      String?        @db.VarChar(50)
+  framework     String?        @db.VarChar(100)
+  status        review_status? @default(pending)
+  priority      Int?           @default(0)
+  cache_hit     Boolean?       @default(false)
+  created_at    DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?      @default(now()) @db.Timestamptz(6)
+  completed_at  DateTime?      @db.Timestamptz(6)
+  cr_messages   cr_messages[]
+  Profile       Profile        @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Project       Project        @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at(sort: Desc)], map: "idx_review_requests_created_at")
+  @@index([diff_hash], map: "idx_review_requests_diff_hash")
+  @@index([profile_id, project_id], map: "idx_review_requests_profile_project")
+  @@index([project_id], map: "idx_review_requests_project_id")
+  @@index([status], map: "idx_review_requests_status")
+}
+
+enum ai_model_type {
+  gpt_4o            @map("gpt-4o")
+  claude_3_5_sonnet @map("claude-3.5-sonnet")
+  gpt_4_turbo       @map("gpt-4-turbo")
+  local_mistral     @map("local-mistral")
+  deepseek_v2       @map("deepseek-v2")
+  deepseek_chat     @map("deepseek-chat")
+}
+
+enum message_type {
+  human
+  ai
+  system
+}
+
+enum review_status {
+  pending
+  in_progress
+  completed
+  failed
 }
