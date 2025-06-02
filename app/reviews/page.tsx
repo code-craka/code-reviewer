@@ -13,8 +13,16 @@ import { getDateTimeString } from "@/components/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReviewsPage() {
-  const { reviews, error } = await getUserReviewsAction();
+  const response = await getUserReviewsAction();
+  
+  // Type guard to check if we have reviews
+  const reviews = 'reviews' in response && Array.isArray(response.reviews) 
+    ? response.reviews 
+    : [];
+  const error = response.error;
 
   if (error) {
     return notFound();
@@ -43,20 +51,20 @@ export default async function ReviewsPage() {
           )}
 
           {reviews?.map((review) => (
-            <Card key={review.id}>
+            <Card key={(review as any).id}>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle>
-                      {review.fileName || "Untitled Review"}
+                      {(review as any).fileName || "Untitled Review"}
                     </CardTitle>
                     <CardDescription>
-                      {review.language} • {getDateTimeString(review.createdAt)}
+                      {(review as any).language} • {getDateTimeString((review as any).createdAt)}
                     </CardDescription>
                   </div>
                   <div className="space-x-2">
                     <Button variant="outline" asChild>
-                      <Link href={`/reviews/${review.id}`}>View Details</Link>
+                      <Link href={`/reviews/${(review as any).id}`}>View Details</Link>
                     </Button>
                   </div>
                 </div>
@@ -64,13 +72,14 @@ export default async function ReviewsPage() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   <div className="text-sm px-2.5 py-0.5 rounded-full bg-muted">
-                    {review.modelName}
+                    {/* Handle both types of review objects */}
+                    {(review as any).modelName || (review as any).modelId || 'Unknown model'}
                   </div>
                   <div className="text-sm px-2.5 py-0.5 rounded-full bg-muted">
-                    {review.depth} review
+                    {(review as any).depth} review
                   </div>
                   <div className="text-sm px-2.5 py-0.5 rounded-full bg-muted">
-                    {review.results?.length || 0} findings
+                    {(review as any).results?.length || 0} findings
                   </div>
                 </div>
               </CardContent>

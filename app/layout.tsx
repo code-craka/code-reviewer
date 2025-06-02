@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { LayoutBackground } from "@/components/layout-background";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 
 const inter = Inter({
@@ -220,28 +221,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
           <div className="relative min-h-screen flex flex-col">
             {/* Background effects */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/20 to-cyan-900/20 animate-pulse" />
-              <div className="absolute inset-0">
-                {[...Array(30)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-1 h-1 bg-cyan-400/20 rounded-full animate-float"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 10}s`,
-                      animationDuration: `${10 + Math.random() * 20}s`,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl animate-pulse" />
-              <div
-                className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"
-                style={{ animationDelay: "2s" }}
-              />
-            </div>
+            <LayoutBackground />
             <main id="main-content" className="relative flex-1">
               {children}
             </main>

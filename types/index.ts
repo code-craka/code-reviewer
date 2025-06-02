@@ -31,24 +31,39 @@ export interface AIModelOption {
   isSimulated: boolean;
 }
 
-// This UserProfile type represents the user profile data we store, typically in a 'profiles' table.
-export interface UserProfile {
-  id: string; // Should match Supabase auth.users.id
-  username?: string | null;
-  email?: string | null; // Typically the Supabase auth user's email
+// Updated Profile interface with new fields for production
+export interface Profile {
+  id: string;
+  email: string;
+  username: string;
   profilePictureUrl?: string | null;
   bio?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  role: "user" | "admin";
+  isActive: boolean;
+  lastLoginAt?: Date | null;
+  onboardingCompleted: boolean;
+  preferences: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+  projects?: Project[];
+  reviews?: Review[];
+  reviewResults?: ReviewResult[];
   teamMemberships?: TeamMember[];
   ownedTeams?: Team[];
   billingDetails?: BillingDetail;
   subscriptions?: Subscription[];
+  apiKeys?: ApiKey[];
+  notifications?: Notification[];
+  conversations?: Conversation[];
+  usageMetrics?: UsageMetrics[];
 }
 
-// AppUser can be a combination of Supabase's User object and our custom UserProfile data.
+// Legacy alias for backwards compatibility
+export interface UserProfile extends Profile {}
+
+// AppUser can be a combination of Supabase's User object and our custom Profile data.
 export interface AppUser extends SupabaseUser {
-  profile?: UserProfile; // Optional: embed our custom profile data for convenience
+  profile?: Profile;
 }
 
 // This Project type should align with your Prisma schema for the 'Project' model.
@@ -58,7 +73,7 @@ export interface Project {
   description?: string | null;
   repositoryUrl?: string | null;
   ownerId: string;
-  owner?: UserProfile;
+  owner?: Profile;
   reviews?: Review[];
   reviewResults?: ReviewResult[];
   teamId?: string | null;
@@ -86,7 +101,7 @@ export interface ReviewResult {
   reviewId: string;
   review?: Review;
   authorId: string;
-  author?: UserProfile;
+  author?: Profile;
   projectId: string;
   project?: Project;
   fileName: string;
@@ -109,7 +124,7 @@ export interface Team {
   name: string;
   description?: string | null;
   ownerId: string;
-  owner?: UserProfile;
+  owner?: Profile;
   members?: TeamMember[];
   projects?: Project[];
   invitations?: Invitation[];
@@ -122,7 +137,7 @@ export interface TeamMember {
   teamId: string;
   team?: Team;
   userId: string;
-  user?: UserProfile;
+  user?: Profile;
   role: "owner" | "admin" | "member" | "viewer";
   joinedAt: Date;
   updatedAt: Date;
@@ -144,7 +159,7 @@ export interface Invitation {
 export interface BillingDetail {
   id: string;
   profileId: string;
-  profile?: UserProfile;
+  profile?: Profile;
   companyName?: string | null;
   address?: string | null;
   city?: string | null;
@@ -159,7 +174,7 @@ export interface BillingDetail {
 export interface Subscription {
   id: string;
   profileId: string;
-  profile?: UserProfile;
+  profile?: Profile;
   planId: string;
   planName: string;
   status: "active" | "canceled" | "past_due" | "trialing";
@@ -175,7 +190,7 @@ export interface Subscription {
 export interface ApiKey {
   id: string;
   profileId: string;
-  profile?: UserProfile;
+  profile?: Profile;
   name: string;
   key: string;
   lastUsed?: Date | null;
@@ -187,7 +202,7 @@ export interface ApiKey {
 export interface Notification {
   id: string;
   profileId: string;
-  profile?: UserProfile;
+  profile?: Profile;
   type: string;
   title: string;
   message: string;
@@ -229,4 +244,44 @@ export interface ActionResponse<T = unknown> {
   message?: string; // Optional success or general message
   data?: T; // Optional data payload on success
   error?: string | { message: string; details?: unknown }; // Optional error message or object on failure
+}
+
+export interface Conversation {
+  id: string;
+  profileId: string;
+  profile?: Profile;
+  messages?: Message[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  conversation?: Conversation;
+  text: string;
+  senderId: string;
+  sender?: Profile;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AnalyticsEvent {
+  id: string;
+  profileId: string;
+  profile?: Profile;
+  eventType: string;
+  eventData: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UsageMetrics {
+  id: string;
+  profileId: string;
+  profile?: Profile;
+  metricType: string;
+  metricValue: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

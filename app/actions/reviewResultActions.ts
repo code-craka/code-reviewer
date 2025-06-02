@@ -6,6 +6,7 @@ import { ReviewResult, ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import * as reviewResultService from "@/services/reviewResultService";
 import type { ReviewResultStats } from "@/types";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 /**
  * Get review results for a specific review
@@ -21,6 +22,14 @@ export async function getReviewResults(
   if (!user) {
     return { success: false, error: "User not authenticated" };
   }
+
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
 
   try {
     // First check if the user has access to the review
@@ -44,10 +53,10 @@ export async function getReviewResults(
     }
 
     // Check if user has access to the project
-    const isOwner = review.project.ownerId === user.id;
+    const isOwner = review.project.ownerId === profile.id;
     const isTeamMember =
       review.project.team?.members.some(
-        (member) => member.userId === user.id,
+        (member) => member.userId === profile.id,
       ) || false;
 
     if (!isOwner && !isTeamMember) {
@@ -83,6 +92,14 @@ export async function getProjectReviewResults(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
+
   try {
     // First check if the user has access to the project
     const project = await prisma.project.findUnique({
@@ -101,9 +118,9 @@ export async function getProjectReviewResults(
     }
 
     // Check if user has access to the project
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamMember =
-      project.team?.members.some((member) => member.userId === user.id) ||
+      project.team?.members.some((member) => member.userId === profile.id) ||
       false;
 
     if (!isOwner && !isTeamMember) {
@@ -141,6 +158,14 @@ export async function createReviewResult(
   if (!user) {
     return { success: false, error: "User not authenticated" };
   }
+
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
 
   const reviewId = formData.get("reviewId") as string;
   const projectId = formData.get("projectId") as string;
@@ -204,11 +229,11 @@ export async function createReviewResult(
     }
 
     // Check if user has permission to create review results
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamMember =
       project.team?.members.some(
         (member) =>
-          member.userId === user.id &&
+          member.userId === profile.id &&
           ["owner", "admin", "member"].includes(member.role),
       ) || false;
 
@@ -223,7 +248,7 @@ export async function createReviewResult(
     // Create the review result
     const result = await reviewResultService.createReviewResult(
       reviewId,
-      user.id, // authorId
+      profile.id, // authorId
       projectId,
       fileName,
       filePath,
@@ -260,6 +285,14 @@ export async function updateReviewResultStatus(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
+
   try {
     // Get the review result to check permissions
     const reviewResult = await prisma.reviewResult.findUnique({
@@ -282,11 +315,11 @@ export async function updateReviewResultStatus(
     }
 
     // Check if user has access to the project
-    const isOwner = reviewResult.project.ownerId === user.id;
+    const isOwner = reviewResult.project.ownerId === profile.id;
     const isTeamMember =
       reviewResult.project.team?.members.some(
         (member) =>
-          member.userId === user.id &&
+          member.userId === profile.id &&
           ["owner", "admin", "member"].includes(member.role),
       ) || false;
 
@@ -301,7 +334,7 @@ export async function updateReviewResultStatus(
     const result = await reviewResultService.updateReviewResultStatus(
       resultId,
       status,
-      user.id,
+      profile.id,
     );
 
     revalidatePath(
@@ -330,6 +363,14 @@ export async function getReviewResultStats(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
+
   try {
     // Check if the user has access to the project
     const project = await prisma.project.findUnique({
@@ -348,9 +389,9 @@ export async function getReviewResultStats(
     }
 
     // Check if user has access to the project
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamMember =
-      project.team?.members.some((member) => member.userId === user.id) ||
+      project.team?.members.some((member) => member.userId === profile.id) ||
       false;
 
     if (!isOwner && !isTeamMember) {
@@ -383,6 +424,14 @@ export async function deleteReviewResult(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
+  const profile = profileResult.data;
+
   try {
     // Get the review result to check permissions
     const reviewResult = await prisma.reviewResult.findUnique({
@@ -405,11 +454,11 @@ export async function deleteReviewResult(
     }
 
     // Check if user has access to the project
-    const isOwner = reviewResult.project.ownerId === user.id;
+    const isOwner = reviewResult.project.ownerId === profile.id;
     const isTeamAdmin =
       reviewResult.project.team?.members.some(
         (member) =>
-          member.userId === user.id && ["owner", "admin"].includes(member.role),
+          member.userId === profile.id && ["owner", "admin"].includes(member.role),
       ) || false;
 
     // Only project owners and team admins can delete review results

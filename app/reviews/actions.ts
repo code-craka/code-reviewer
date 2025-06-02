@@ -3,12 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { ReviewDepth, ReviewStatus } from "@/types/ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { logger } from "@/lib/utils/logger";
-import {
-  ApiError,
-  handleApiError,
-} from "@/lib/utils/error-handling";
 import { ReviewService } from "@/lib/ai/review-service";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
+import { handleApiError } from "@/lib/utils/error-handling";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * Server action to create a new code review
@@ -23,16 +21,25 @@ export async function createReviewAction(
 ) {
   try {
     const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session?.data?.session) {
+    if (userError || !user) {
       return {
-        error: "You must be logged in to create a review",
+        error: "Authentication required",
         review: null,
       };
     }
 
-    const userId = session.data.session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return {
+        error: "Failed to get user profile",
+        review: null,
+      };
+    }
+
+    const profile = profileResult.data;
     const reviewService = new ReviewService();
 
     const review = await reviewService.createReview({
@@ -41,7 +48,7 @@ export async function createReviewAction(
       fileName,
       modelId,
       depth,
-      userId,
+      userId: profile.id,
       projectId,
     });
 
@@ -57,21 +64,25 @@ export async function createReviewAction(
     };
   } catch (error) {
     logger.error("Failed to create review", { error });
-    return handleApiError(error as Error | ApiError, "Failed to create review");
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      review: null,
+    };
   }
 }
 
 /**
- * Server action to process a code review with the selected AI model
+ * Server action to process a review (run AI analysis)
  */
 export async function processReviewAction(reviewId: string) {
   try {
     const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session?.data?.session) {
+    if (userError || !user) {
       return {
-        error: "You must be logged in to process a review",
+        error: "Authentication required",
         review: null,
       };
     }
@@ -90,16 +101,16 @@ export async function processReviewAction(reviewId: string) {
       review,
     };
   } catch (error) {
-    logger.error("Failed to process review", { error, reviewId });
-    return handleApiError(
-      error as Error | ApiError,
-      "Failed to process review",
-    );
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      review: null,
+    };
   }
 }
 
 /**
- * Server action to get a review by its ID
+ * Server action to get a specific review by ID
  */
 export async function getReviewAction(reviewId: string) {
   try {
@@ -111,41 +122,53 @@ export async function getReviewAction(reviewId: string) {
       review,
     };
   } catch (error) {
-    logger.error("Failed to get review", { error, reviewId });
-    return handleApiError(error as Error | ApiError, "Failed to get review");
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      review: null,
+    };
   }
 }
 
 /**
- * Server action to get all reviews for the current user
+ * Server action to get all reviews for a user
  */
 export async function getUserReviewsAction(projectId?: string) {
   try {
     const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session?.data?.session) {
+    if (userError || !user) {
       return {
-        error: "You must be logged in to view reviews",
+        error: "Authentication required",
         reviews: [],
       };
     }
 
-    const userId = session.data.session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return {
+        error: "Failed to get user profile",
+        reviews: [],
+      };
+    }
+
+    const profile = profileResult.data;
     const reviewService = new ReviewService();
 
-    const reviews = await reviewService.getUserReviews(userId, projectId);
+    const reviews = await reviewService.getUserReviews(profile.id, projectId);
 
     return {
       error: null,
       reviews,
     };
   } catch (error) {
-    logger.error("Failed to get user reviews", { error, projectId });
-    return handleApiError(
-      error as Error | ApiError,
-      "Failed to get user reviews",
-    );
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      reviews: [],
+    };
   }
 }
 
@@ -158,19 +181,28 @@ export async function updateReviewResultStatusAction(
 ) {
   try {
     const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session?.data?.session) {
+    if (userError || !user) {
       return {
-        error: "You must be logged in to update a review result",
+        error: "Authentication required",
         success: false,
       };
     }
 
-    const reviewService = new ReviewService();
-    const userId = session.data.session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return {
+        error: "Failed to get user profile",
+        success: false,
+      };
+    }
 
-    await reviewService.updateReviewResultStatus(resultId, status, userId);
+    const profile = profileResult.data;
+    const reviewService = new ReviewService();
+
+    await reviewService.updateReviewResultStatus(resultId, status, profile.id);
 
     // We don't know the exact paths to revalidate, but we can revalidate the reviews page
     // For a more targeted revalidation, we would need to know the reviewId or projectId
@@ -181,15 +213,11 @@ export async function updateReviewResultStatusAction(
       success: true,
     };
   } catch (error) {
-    logger.error("Failed to update review result status", {
-      error,
-      resultId,
-      status,
-    });
-    return handleApiError(
-      error as Error | ApiError,
-      "Failed to update review result status",
-    );
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      success: false,
+    };
   }
 }
 
@@ -199,28 +227,37 @@ export async function updateReviewResultStatusAction(
 export async function deleteReviewAction(reviewId: string) {
   try {
     const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session?.data?.session) {
+    if (userError || !user) {
       return {
-        error: "You must be logged in to delete a review",
+        error: "Authentication required",
         success: false,
       };
     }
 
-    const userId = session.data.session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return {
+        error: "Failed to get user profile",
+        success: false,
+      };
+    }
+
+    const profile = profileResult.data;
     const reviewService = new ReviewService();
 
     // Check if the review belongs to the user before deleting
     const review = await reviewService.getReviewById(reviewId);
-    if (review.userId !== userId) {
+    if (review.userId !== profile.id) {
       return {
         error: "You do not have permission to delete this review",
         success: false,
       };
     }
 
-    await reviewService.deleteReview(reviewId, userId);
+    await reviewService.deleteReview(reviewId, profile.id);
 
     // Revalidate both paths as the review might be displayed in both
     revalidatePath("/reviews");
@@ -233,8 +270,11 @@ export async function deleteReviewAction(reviewId: string) {
       success: true,
     };
   } catch (error) {
-    logger.error("Failed to delete review", { error, reviewId });
-    return handleApiError(error as Error | ApiError, "Failed to delete review");
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      success: false,
+    };
   }
 }
 
@@ -243,16 +283,6 @@ export async function deleteReviewAction(reviewId: string) {
  */
 export async function getProjectReviewStatsAction(projectId: string) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const session = await supabase.auth.getSession();
-
-    if (!session?.data?.session) {
-      return {
-        error: "You must be logged in to view project stats",
-        stats: null,
-      };
-    }
-
     const reviewService = new ReviewService();
     const stats = await reviewService.getProjectReviewStats(projectId);
 
@@ -261,10 +291,10 @@ export async function getProjectReviewStatsAction(projectId: string) {
       stats,
     };
   } catch (error) {
-    logger.error("Failed to get project review stats", { error, projectId });
-    return handleApiError(
-      error as Error | ApiError,
-      "Failed to get project review stats",
-    );
+    const errorResult = handleApiError(error);
+    return {
+      error: errorResult.error,
+      stats: null,
+    };
   }
 }

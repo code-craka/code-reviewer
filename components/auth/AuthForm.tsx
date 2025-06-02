@@ -73,7 +73,7 @@ export default function AuthForm({
   const getRedirectURL = () => {
     const nextPath = searchParams.get("next") || "/reviewer";
     let url =
-      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
       (typeof window !== "undefined" ? window.location.origin : "") ||
       "http://localhost:3000/";
     url = url.includes("http") ? url : `https://${url}`;

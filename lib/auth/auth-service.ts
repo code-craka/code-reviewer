@@ -83,7 +83,7 @@ export const signInWithOAuth = withErrorHandling(async (provider: Provider) => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
 
@@ -111,7 +111,7 @@ export const requestPasswordReset = withErrorHandling(
       const { error } = await supabase.auth.resetPasswordForEmail(
         params.email,
         {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
         },
       );
 
@@ -151,23 +151,23 @@ export const signOut = withErrorHandling(async () => {
 });
 
 /**
- * Get the current user session
+ * Get the current user
  */
-export const getCurrentSession = withErrorHandling(async () => {
+export const getCurrentUser = withErrorHandling(async () => {
   try {
     // Ensure we properly await the Supabase client before using it
     const supabase = await createSupabaseServerClient();
 
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getUser();
 
     if (error) {
-      logger.error("Get session failed", { error: error.message });
-      throw createApiError(error.message, 401, "auth/session-error");
+      logger.error("Get user failed", { error: error.message });
+      throw createApiError(error.message, 401, "auth/user-error");
     }
 
     return data;
   } catch (error) {
-    logger.error("Authentication error retrieving session", { error });
+    logger.error("Authentication error retrieving user", { error });
     throw error;
   }
 });

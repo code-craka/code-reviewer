@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Team, TeamMember, Invitation, ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 /**
  * Get all teams for the current user
@@ -19,9 +20,17 @@ export async function getUserTeams(): Promise<ActionResponse<Team[]>> {
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get teams the user owns
     const ownedTeams = await prisma.team.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: profile.id },
       include: {
         members: {
           include: {
@@ -37,10 +46,10 @@ export async function getUserTeams(): Promise<ActionResponse<Team[]>> {
       where: {
         members: {
           some: {
-            userId: user.id,
+            userId: profile.id,
             NOT: {
               team: {
-                ownerId: user.id,
+                ownerId: profile.id,
               },
             },
           },
@@ -82,6 +91,14 @@ export async function getTeam(teamId: string): Promise<ActionResponse<Team>> {
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -107,8 +124,8 @@ export async function getTeam(teamId: string): Promise<ActionResponse<Team>> {
 
     // Check if user is a member of the team
     const isMember =
-      team.ownerId === user.id ||
-      team.members.some((member) => member.userId === user.id);
+      team.ownerId === profile.id ||
+      team.members.some((member) => member.userId === profile.id);
 
     if (!isMember) {
       return { success: false, error: "You do not have access to this team" };
@@ -144,14 +161,22 @@ export async function createTeam(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     const team = await prisma.team.create({
       data: {
         name: name.trim(),
         description,
-        ownerId: user.id,
+        ownerId: profile.id,
         members: {
           create: {
-            userId: user.id,
+            userId: profile.id,
             role: "owner",
           },
         },
@@ -201,6 +226,14 @@ export async function updateTeam(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team to check ownership
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -210,7 +243,7 @@ export async function updateTeam(
       return { success: false, error: "Team not found" };
     }
 
-    if (team.ownerId !== user.id) {
+    if (team.ownerId !== profile.id) {
       return {
         success: false,
         error: "Only the team owner can update the team",
@@ -263,6 +296,14 @@ export async function deleteTeam(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team to check ownership
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -272,7 +313,7 @@ export async function deleteTeam(
       return { success: false, error: "Team not found" };
     }
 
-    if (team.ownerId !== user.id) {
+    if (team.ownerId !== profile.id) {
       return {
         success: false,
         error: "Only the team owner can delete the team",
@@ -328,6 +369,14 @@ export async function inviteUserToTeam(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team to check permissions
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -341,7 +390,7 @@ export async function inviteUserToTeam(
     }
 
     // Check if current user is the owner or an admin
-    const currentUserMember = team.members.find((m) => m.userId === user.id);
+    const currentUserMember = team.members.find((m) => m.userId === profile.id);
     if (
       !currentUserMember ||
       (currentUserMember.role !== "owner" && currentUserMember.role !== "admin")
@@ -433,6 +482,14 @@ export async function acceptTeamInvitation(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the invitation
     const invitation = await prisma.invitation.findUnique({
       where: { token },
@@ -451,7 +508,7 @@ export async function acceptTeamInvitation(
 
     // Check if the invitation email matches the user's email
     const userProfile = await prisma.profile.findUnique({
-      where: { id: user.id },
+      where: { id: profile.id },
     });
 
     if (!userProfile || userProfile.email !== invitation.email) {
@@ -465,7 +522,7 @@ export async function acceptTeamInvitation(
     const existingMember = await prisma.teamMember.findFirst({
       where: {
         teamId: invitation.teamId,
-        userId: user.id,
+        userId: profile.id,
       },
     });
 
@@ -483,7 +540,7 @@ export async function acceptTeamInvitation(
     const teamMember = await prisma.teamMember.create({
       data: {
         teamId: invitation.teamId,
-        userId: user.id,
+        userId: profile.id,
         role: invitation.role,
       },
     });
@@ -524,6 +581,14 @@ export async function declineTeamInvitation(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the invitation
     const invitation = await prisma.invitation.findUnique({
       where: { token },
@@ -539,7 +604,7 @@ export async function declineTeamInvitation(
 
     // Check if the invitation email matches the user's email
     const userProfile = await prisma.profile.findUnique({
-      where: { id: user.id },
+      where: { id: profile.id },
     });
 
     if (!userProfile || userProfile.email !== invitation.email) {
@@ -585,6 +650,14 @@ export async function removeTeamMember(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team to check permissions
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -610,7 +683,7 @@ export async function removeTeamMember(
     }
 
     // Check if current user is the owner or an admin
-    const currentUserMember = team.members.find((m) => m.userId === user.id);
+    const currentUserMember = team.members.find((m) => m.userId === profile.id);
     if (
       !currentUserMember ||
       (currentUserMember.role !== "owner" && currentUserMember.role !== "admin")
@@ -675,6 +748,14 @@ export async function updateTeamMemberRole(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Get the team to check permissions
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -700,7 +781,7 @@ export async function updateTeamMemberRole(
     }
 
     // Check if current user is the owner
-    if (team.ownerId !== user.id) {
+    if (team.ownerId !== profile.id) {
       return {
         success: false,
         error: "Only the team owner can change member roles",

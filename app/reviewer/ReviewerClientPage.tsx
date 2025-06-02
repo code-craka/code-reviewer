@@ -118,7 +118,7 @@ export default function ReviewerClientPage({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, router, pathname]); // currentProject removed to prevent loops on selection
+  }, [searchParams, currentProject]);
 
   useEffect(() => {
     if (globalError) {
@@ -281,9 +281,7 @@ export default function ReviewerClientPage({
     setCurrentProject(null);
     setCurrentCodeInEditor("// Start coding in scratchpad mode...");
     if (showInfo) setGlobalInfo("Switched to scratchpad mode.");
-    if (searchParams.get("projectId")) {
-      router.push(pathname, { scroll: false });
-    }
+    // URL clearing is now handled separately to prevent useEffect loops
   };
 
   const refreshProjects = useCallback(() => {
@@ -316,11 +314,15 @@ export default function ReviewerClientPage({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentProject, currentCodeInEditor, pathname, router]);
+  }, [currentProject]);
 
   const loadProject = (projectId: string) => {
-    if (!projectId) {
+    if (!projectId || projectId === "scratchpad") {
       handleSwitchToScratchpad();
+      // Clear URL params when switching to scratchpad mode
+      if (searchParams.get("projectId")) {
+        router.push(pathname, { scroll: false });
+      }
       return;
     }
     router.push(`${pathname}?projectId=${projectId}`, { scroll: false });
@@ -409,32 +411,34 @@ export default function ReviewerClientPage({
             Load Project:
           </Label>
           <div className="flex gap-2">
-            <Select
-              value={currentProject?.id || ""}
-              onValueChange={loadProject}
-            >
-              <SelectTrigger id="project-selector" className="flex-grow">
-                <SelectValue
-                  placeholder={
-                    currentProject
-                      ? "Switch to Scratchpad..."
-                      : "Select a Project..."
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">
-                  {currentProject
-                    ? "Switch to Scratchpad"
-                    : "Select a Project..."}
-                </SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
+            {isClientMounted ? (
+              <Select
+                value={currentProject?.id || "scratchpad"}
+                onValueChange={loadProject}
+              >
+                <SelectTrigger id="project-selector" className="flex-grow">
+                  <SelectValue
+                    placeholder="Select a Project..."
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scratchpad">
+                    {currentProject
+                      ? "Switch to Scratchpad"
+                      : "Select a Project..."}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex-grow h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground">
+                Loading projects...
+              </div>
+            )}
             <Button
               onClick={refreshProjects}
               disabled={isPending}
@@ -543,7 +547,7 @@ export default function ReviewerClientPage({
           )}
           <Button
             variant="outline"
-            onClick={() => router.push("/projects")}
+            onClick={() => router.push("/dashboard")}
             className="w-full"
           >
             View All Projects

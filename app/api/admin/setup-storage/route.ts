@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 // Constants
 const AVATARS_BUCKET = "avatars";
@@ -62,32 +63,29 @@ export async function POST() {
 
     console.log(`User authenticated: ${user.id}`);
 
-    // Check if user has admin role by querying the profiles table
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      console.error("Error fetching user profile:", profileError);
+    // Get or create user profile to check admin role
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      console.error("Error getting user profile:", profileResult.error);
       return NextResponse.json(
         {
           error: "Error fetching user profile",
-          details: profileError.message,
+          details: profileResult.error,
         },
         { status: 500 },
       );
     }
 
-    if (!profile || profile.role !== "admin") {
+    const profile = profileResult.data;
+
+    if (profile.role !== "admin") {
       console.warn(
-        `Access denied for user ${user.id} with role ${profile?.role || "undefined"}`,
+        `Access denied for user ${user.id} with role ${profile.role}`,
       );
       return NextResponse.json(
         {
           error: "Forbidden: Admin access required",
-          currentRole: profile?.role || "undefined",
+          currentRole: profile.role,
         },
         { status: 403 },
       );
@@ -206,7 +204,7 @@ export async function POST() {
         policyResults.push({
           name: policy.name,
           success: false,
-          error: policyErr.message || "Unknown error",
+          error: (policyErr as Error).message || "Unknown error",
         });
       }
     }
@@ -252,7 +250,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error: "An unexpected error occurred during storage setup",
-        details: error.message || "Unknown error",
+        details: (error as Error).message || "Unknown error",
       },
       { status: 500 },
     );

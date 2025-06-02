@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Code, Menu } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
+import { Code, Menu, User } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface NavigationProps {
-  initialUser?: User | null;
+  initialUser?: SupabaseUser | null;
   profilePictureUrl?: string | null;
   username?: string | null;
 }
@@ -20,8 +20,9 @@ export const Navigation = ({
   profilePictureUrl,
   username,
 }: NavigationProps = {}) => {
-  const [user, setUser] = useState<User | null>(initialUser || null);
+  const [user, setUser] = useState<SupabaseUser | null>(initialUser || null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -34,7 +35,7 @@ export const Navigation = ({
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -51,9 +52,36 @@ export const Navigation = ({
     await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/reviewer`,
       },
     });
+  };
+
+  // Reset image error when profilePictureUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [profilePictureUrl]);
+
+  const renderProfileImage = (className: string) => {
+    if (!profilePictureUrl || imageError) {
+      return (
+        <div className={`${className} bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center`}>
+          <User className="w-5 h-5 text-white" />
+        </div>
+      );
+    }
+
+    return (
+      <Image
+        src={profilePictureUrl}
+        alt="Profile"
+        width={32}
+        height={32}
+        className={className}
+        onError={() => setImageError(true)}
+        onLoad={() => setImageError(false)}
+      />
+    );
   };
 
   return (
@@ -107,15 +135,7 @@ export const Navigation = ({
                 <span className="text-gray-300">
                   Welcome, {username || user.email}
                 </span>
-                {profilePictureUrl && (
-                  <Image
-                    src={profilePictureUrl}
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full border border-violet-500/50"
-                  />
-                )}
+                {renderProfileImage("w-8 h-8 rounded-full border border-violet-500/50")}
                 <Button
                   onClick={handleSignOut}
                   variant="outline"
@@ -191,15 +211,7 @@ export const Navigation = ({
               {user ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    {profilePictureUrl && (
-                      <Image
-                        src={profilePictureUrl}
-                        alt="Profile"
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full border border-violet-500/50"
-                      />
-                    )}
+                    {renderProfileImage("w-8 h-8 rounded-full border border-violet-500/50")}
                     <span className="text-gray-300">
                       Welcome, {username || user.email}
                     </span>

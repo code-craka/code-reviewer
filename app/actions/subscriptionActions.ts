@@ -1,9 +1,9 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Subscription, BillingDetail, ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 import * as subscriptionService from "@/services/subscriptionService";
 
 /**
@@ -22,14 +22,13 @@ export async function getUserSubscription(): Promise<
   }
 
   try {
-    // Get the user's profile
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
     }
+
+    const profile = profileResult.data;
 
     // Get the user's subscription
     const subscription = await subscriptionService.getUserSubscription(
@@ -62,14 +61,13 @@ export async function getUserBillingDetails(): Promise<
   }
 
   try {
-    // Get the user's profile
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
     }
+
+    const profile = profileResult.data;
 
     // Get the user's billing details
     const billingDetails = await subscriptionService.getUserBillingDetails(
@@ -102,16 +100,7 @@ export async function updateSubscription(
   paymentId?: string,
 ): Promise<ActionResponse<Subscription>> {
   try {
-    // Check if the profile exists
-    const profile = await prisma.profile.findUnique({
-      where: { id: profileId },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
-    }
-
-    // Update the subscription
+    // Update the subscription using the provided profileId directly
     const result = await subscriptionService.createOrUpdateSubscription(
       profileId,
       planId,
@@ -149,14 +138,13 @@ export async function cancelSubscription(
   }
 
   try {
-    // Get the user's profile
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
     }
+
+    const profile = profileResult.data;
 
     // Get the user's active subscription
     const subscription = await subscriptionService.getUserSubscription(
@@ -198,14 +186,13 @@ export async function updateBillingDetails(
   }
 
   try {
-    // Get the user's profile
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
     }
+
+    const profile = profileResult.data;
 
     // Extract billing details from form data
     const billingData = {
@@ -249,14 +236,13 @@ export async function checkSubscriptionStatus(): Promise<
   }
 
   try {
-    // Get the user's profile
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    if (!profile) {
-      return { success: false, error: "User profile not found" };
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
     }
+
+    const profile = profileResult.data;
 
     // Check if the user has an active subscription
     const hasActiveSubscription =

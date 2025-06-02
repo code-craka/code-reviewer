@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ProjectSettings, ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 import * as projectSettingsService from "@/services/projectSettingsService";
 
 /**
@@ -22,6 +23,14 @@ export async function getProjectSettings(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Check if the user has access to the project
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -39,9 +48,9 @@ export async function getProjectSettings(
     }
 
     // Check if user has access to the project
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamMember =
-      project.team?.members.some((member) => member.userId === user.id) ||
+      project.team?.members.some((member) => member.userId === profile.id) ||
       false;
 
     if (!isOwner && !isTeamMember) {
@@ -102,6 +111,14 @@ export async function updateProjectSettings(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Check if the user has access to the project
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -119,11 +136,11 @@ export async function updateProjectSettings(
     }
 
     // Check if user has permission to update project settings
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamAdmin =
       project.team?.members.some(
         (member) =>
-          member.userId === user.id && ["owner", "admin"].includes(member.role),
+          member.userId === profile.id && ["owner", "admin"].includes(member.role),
       ) || false;
 
     if (!isOwner && !isTeamAdmin) {
@@ -171,6 +188,14 @@ export async function toggleAutoReview(
   }
 
   try {
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Check if the user has access to the project
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -188,11 +213,11 @@ export async function toggleAutoReview(
     }
 
     // Check if user has permission to update project settings
-    const isOwner = project.ownerId === user.id;
+    const isOwner = project.ownerId === profile.id;
     const isTeamAdmin =
       project.team?.members.some(
         (member) =>
-          member.userId === user.id && ["owner", "admin"].includes(member.role),
+          member.userId === profile.id && ["owner", "admin"].includes(member.role),
       ) || false;
 
     if (!isOwner && !isTeamAdmin) {

@@ -12,6 +12,9 @@ import {
 } from "@/types/ai";
 import { generateReview } from "./models";
 import { v4 as uuidv4 } from "uuid";
+import { ragClient } from "../services/rag-client";
+import { embeddingService } from "../services/embedding-service";
+import type { SimilaritySearchResult } from "@/types/rag";
 
 // Define available AI models
 const AI_MODELS: AIModel[] = [
@@ -177,6 +180,59 @@ export class ReviewService {
         );
       }
 
+      // Get user profile ID for RAG
+      const { data: profile } = await supabase
+        .from("Profile")
+        .select("id")
+        .eq("userId", userId)
+        .single();
+
+      if (!profile) {
+        throw createApiError(
+          "User profile not found",
+          404,
+          "profile/not-found",
+        );
+      }
+
+      // Initialize RAG pipeline - search for similar reviews
+      let ragReviewRequest = null;
+      let similarReviews: SimilaritySearchResult[] = [];
+      let cacheHit = false;
+
+      try {
+        // Create RAG review request and search for similar content
+        const ragResult = await ragClient.initializeReview(
+          submission.projectId,
+          profile.id,
+          submission.code,
+          submission.fileName || undefined,
+          submission.language || undefined
+        );
+
+        if (ragResult.success) {
+          ragReviewRequest = ragResult.data?.reviewRequest || null;
+          similarReviews = ragResult.data?.similarReviews || [];
+          cacheHit = ragResult.data?.cacheHit || false;
+
+          logger.info("RAG pipeline initialized", {
+            reviewRequestId: ragReviewRequest?.id,
+            similarReviewsCount: similarReviews?.length || 0,
+            cacheHit,
+            processingTime: ragResult.data?.processingTimeMs
+          });
+        } else {
+          logger.warn("RAG pipeline initialization failed", {
+            error: ragResult.error?.message,
+            fallbackToStandardFlow: true
+          });
+        }
+      } catch (ragError) {
+        logger.warn("RAG pipeline error, continuing with standard flow", {
+          error: ragError,
+        });
+      }
+
       // Create a new review record for each model
       const now = new Date().toISOString();
       const reviewRecords = selectedModels.map((modelId) => ({
@@ -189,6 +245,10 @@ export class ReviewService {
         createdAt: now,
         updatedAt: now,
         userId,
+        // Add RAG metadata
+        ragReviewRequestId: ragReviewRequest?.id || null,
+        cacheHit,
+        similarReviewsCount: similarReviews?.length,
       }));
 
       const { data: reviews, error: reviewError } = await supabase
@@ -249,6 +309,32 @@ export class ReviewService {
             throw new Error(
               `Failed to save review results: ${resultsError.message}`,
             );
+          }
+
+          // Complete RAG pipeline - store AI response embedding
+          if (ragReviewRequest) {
+            try {
+              await ragClient.completeReview(
+                submission.projectId,
+                profile.id,
+                review.id,
+                aiResponse.summary || "",
+                model.id,
+                submission.fileName,
+                submission.language
+              );
+              
+              logger.info("RAG pipeline completed", {
+                reviewRequestId: ragReviewRequest.id,
+                reviewId: review.id,
+              });
+            } catch (ragCompleteError) {
+              logger.warn("Failed to complete RAG pipeline", {
+                error: ragCompleteError,
+                reviewRequestId: ragReviewRequest.id,
+                reviewId: review.id,
+              });
+            }
           }
 
           // Update the review with summary

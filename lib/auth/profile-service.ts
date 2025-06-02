@@ -1,24 +1,14 @@
-import {
-  createSupabaseServerClient,
-  createSupabaseServerAdminClient,
-} from "../supabase/server";
 import { logger } from "../utils/logger";
 import { createApiError, withErrorHandling } from "../utils/error-handling";
+import prisma from "../prisma";
+import { emailService } from "../email/email-service";
+import type { User } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "../supabase/server";
+import type { Profile } from "@/types";
 
 /**
- * Profile data structure returned from the database
+ * Profile update data structure
  */
-export interface Profile {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-  username: string | null;
-  bio: string | null;
-  profilePictureUrl: string | null;
-  email: string | null;
-}
-
 interface ProfileUpdateData {
   username?: string;
   bio?: string;
@@ -30,24 +20,16 @@ interface ProfileUpdateData {
  */
 export const getProfileById = withErrorHandling(async (profileId: string) => {
   try {
-    // Ensure we properly await the Supabase client before using it
-    const supabase = await createSupabaseServerClient();
+    const profile = await prisma.profile.findUnique({
+      where: { id: profileId },
+    });
 
-    const { data, error } = await supabase
-      .from("Profile")
-      .select("*")
-      .eq("id", profileId)
-      .single();
-
-    if (error) {
-      logger.error("Failed to get profile", {
-        error: error.message,
-        profileId,
-      });
-      throw createApiError(error.message, 404, "profile/not-found");
+    if (!profile) {
+      logger.error("Profile not found", { profileId });
+      throw createApiError("Profile not found", 404, "profile/not-found");
     }
 
-    return data;
+    return profile as Profile;
   } catch (error) {
     logger.error("Error retrieving profile", { error });
     throw error;
@@ -55,95 +37,90 @@ export const getProfileById = withErrorHandling(async (profileId: string) => {
 });
 
 /**
- * Create a new profile for a user
- * (Usually called right after signup)
+ * Create or get a user profile
+ * This is the main function to ensure a profile exists for a user
  */
-export const getUserProfile = withErrorHandling(async (userId: string) => {
+export const createOrGetProfile = withErrorHandling(async (user: User) => {
   try {
-    // For admin operations, use the admin client
-    const supabase = await createSupabaseServerAdminClient();
-
     // First check if profile already exists
-    const { data: existingProfile } = await supabase
-      .from("Profile")
-      .select("id")
-      .eq("id", userId)
-      .single();
+    const existingProfile = await prisma.profile.findUnique({
+      where: { id: user.id },
+    });
 
     if (existingProfile) {
-      return existingProfile;
+      return existingProfile as Profile;
     }
 
-    // Extract username from user metadata or email
-    const username =
-      userId.split("@")[0] ||
-      `user_${userId.substring(0, 8)}`;
+    // Extract user data from auth record
+    const email = user.email || user.user_metadata?.email || '';
+    const username = 
+      user.user_metadata?.user_name ||
+      user.user_metadata?.preferred_username ||
+      user.user_metadata?.name ||
+      (email ? email.split('@')[0] : `user_${user.id.slice(0, 8)}`);
+    
+    const profilePictureUrl = 
+      user.user_metadata?.avatar_url ||
+      user.user_metadata?.picture;
 
-    const { data, error } = await supabase
-      .from("Profile")
-      .insert([
-        {
-          id: userId,
-          email: userId,
-          username,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
+    // Create the profile
+    const profile = await prisma.profile.create({
+      data: {
+        id: user.id,
+        email: email,
+        username: username,
+        profilePictureUrl: profilePictureUrl,
+        bio: null,
+      },
+    });
 
-    if (error) {
-      logger.error("Failed to create profile", {
-        error: error.message,
-        userId,
-      });
-      throw createApiError(error.message, 500, "profile/creation-failed");
+    logger.info('Created profile for user', { userId: user.id, username });
+
+    // Send welcome email if email is available
+    if (email && process.env.RESEND_API_KEY) {
+      try {
+        await emailService.sendWelcomeEmail({
+          username: username,
+          email: email,
+        });
+        logger.info('Welcome email sent', { email });
+      } catch (emailError) {
+        logger.warn('Failed to send welcome email', { error: emailError });
+        // Don't fail the whole process if email fails
+      }
     }
 
-    return data;
+    return profile as Profile;
   } catch (error) {
-    logger.error("Error creating profile", { error });
+    logger.error("Error creating or getting profile", { error });
     throw error;
   }
 });
+
+/**
+ * Legacy function name for backward compatibility
+ */
+export const getUserProfile = createOrGetProfile;
 
 /**
  * Update a user profile
  */
 export const updateProfile = withErrorHandling(async (profileId: string, profileData: ProfileUpdateData) => {
   try {
-    // Ensure we properly await the Supabase client before using it
-    const supabase = await createSupabaseServerClient();
+    const profile = await prisma.profile.update({
+      where: { id: profileId },
+      data: {
+        ...profileData,
+        updatedAt: new Date(),
+      },
+    });
 
-    // Add updated timestamp
-    const updateData = {
-      ...profileData,
-      updatedAt: new Date().toISOString(),
-    };
-
-      const { data, error } = await supabase
-        .from("Profile")
-        .update(updateData)
-        .eq("id", profileId)
-        .select()
-        .single();
-
-      if (error) {
-        logger.error("Failed to update profile", {
-          error: error.message,
-          profileId,
-        });
-        throw createApiError(error.message, 500, "profile/update-failed");
-      }
-
-      return data;
-    } catch (error) {
-      logger.error("Error updating profile", { error });
-      throw error;
-    }
-  },
-) as (...args: unknown[]) => Promise<{ data?: Profile; error?: string; success: boolean }>;
+    return profile as Profile;
+  } catch (error) {
+    logger.error("Error updating profile", { error });
+    throw error;
+  }
+});
 
 /**
  * Upload a profile picture
@@ -160,8 +137,8 @@ export const uploadProfilePicture = withErrorHandling(
 
       // Upload the file to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from("profile-pictures")
-        .upload(fileName, file, {
+        .from("avatars")
+        .upload(`${profileId}/${fileName}`, file, {
           cacheControl: "3600",
           upsert: true,
         });
@@ -176,36 +153,22 @@ export const uploadProfilePicture = withErrorHandling(
 
       // Get the public URL
       const { data: urlData } = supabase.storage
-        .from("profile-pictures")
-        .getPublicUrl(fileName);
+        .from("avatars")
+        .getPublicUrl(`${profileId}/${fileName}`);
 
-      // Update the profile with the new picture URL
-      const { data: profileData, error: profileError } = await supabase
-        .from("Profile")
-        .update({
+      // Update the profile with the new picture URL using Prisma
+      const profile = await prisma.profile.update({
+        where: { id: profileId },
+        data: {
           profilePictureUrl: urlData.publicUrl,
-          updatedAt: new Date().toISOString(),
-        })
-        .eq("id", profileId)
-        .select()
-        .single();
+          updatedAt: new Date(),
+        },
+      });
 
-      if (profileError) {
-        logger.error("Failed to update profile with picture URL", {
-          error: profileError.message,
-          profileId,
-        });
-        throw createApiError(
-          profileError.message,
-          500,
-          "profile/update-failed",
-        );
-      }
-
-      return profileData;
+      return profile as Profile;
     } catch (error) {
       logger.error("Error uploading profile picture", { error });
       throw error;
     }
-  },
-) as (...args: unknown[]) => Promise<{ data?: Profile; error?: string; success: boolean }>;
+  }
+);

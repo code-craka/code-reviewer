@@ -17,6 +17,11 @@ model Profile {
   username           String            @unique
   profilePictureUrl  String?
   bio                String?
+  role               String            @default("user") // user, admin
+  isActive           Boolean           @default(true)
+  lastLoginAt        DateTime?
+  onboardingCompleted Boolean          @default(false)
+  preferences        Json              @default("{}")
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   projects           Project[]         @relation("ProjectOwner")
@@ -28,6 +33,8 @@ model Profile {
   subscriptions      Subscription[]    @relation("ProfileSubscription")
   apiKeys            ApiKey[]          @relation("ProfileApiKey")
   notifications      Notification[]    @relation("ProfileNotification")
+  conversations      Conversation[]    @relation("ProfileConversations")
+  usageMetrics       UsageMetrics[]    @relation("ProfileUsageMetrics")
 }
 
 model Project {
@@ -66,6 +73,12 @@ model Review {
   author          Profile         @relation("ReviewAuthor", fields: [authorId], references: [id])
   content         String
   reviewResults   ReviewResult[]  @relation("ReviewToResults")
+  
+  // RAG pipeline metadata
+  ragReviewRequestId    String?
+  cacheHit             Boolean      @default(false)
+  similarReviewsCount  Int          @default(0)
+  
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -171,6 +184,10 @@ model ApiKey {
   profile         Profile   @relation("ProfileApiKey", fields: [profileId], references: [id])
   name            String
   key             String    @unique
+  provider        String    @default("platform") // platform, openai, anthropic, gemini
+  isCustom        Boolean   @default(false)
+  usage           Json      @default("{}")
+  limits          Json      @default("{}")
   lastUsed        DateTime?
   expiresAt       DateTime?
   createdAt       DateTime  @default(now())
@@ -188,4 +205,54 @@ model Notification {
   data            Json?     // Additional data related to the notification
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model Conversation {
+  id              String    @id @default(uuid())
+  profileId       String
+  profile         Profile   @relation("ProfileConversations", fields: [profileId], references: [id])
+  title           String
+  type            String    @default("general") // general, code_review, assistance
+  isArchived      Boolean   @default(false)
+  messages        Message[] @relation("ConversationMessages")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String
+  conversation    Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+  role            String       // user, assistant, system
+  content         String
+  metadata        Json         @default("{}")
+  cached          Boolean      @default(false)
+  cacheKey        String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model AnalyticsEvent {
+  id              String    @id @default(uuid())
+  profileId       String?
+  eventType       String
+  eventData       Json      @default("{}")
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+}
+
+model UsageMetrics {
+  id              String    @id @default(uuid())
+  profileId       String
+  profile         Profile   @relation("ProfileUsageMetrics", fields: [profileId], references: [id])
+  date            DateTime  @db.Date
+  apiCalls        Int       @default(0)
+  tokensUsed      Int       @default(0)
+  reviewsGenerated Int      @default(0)
+  chatMessages    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([profileId, date])
 }

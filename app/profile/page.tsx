@@ -2,56 +2,36 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navigation } from "@/components/navigation";
 import ProfileClientPage from "./ProfileClientPage";
-import prisma from "@/lib/prisma";
 import type { UserProfile } from "@/types/index";
-import { motion } from "framer-motion"; // Import motion
+import { MotionMain } from "@/components/ui/motion-wrapper";
 import Spinner from "@/components/ui/spinner";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session) {
+  if (userError || !user) {
     redirect("/login?next=/profile"); // Ensure redirect includes next path
   }
-  const { user } = session;
   let userProfileData: UserProfile | null = null;
 
   if (user) {
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-    if (profile) {
-      userProfileData = profile as UserProfile;
-    } else {
-      try {
-        const newProfile = await prisma.profile.create({
-          data: {
-            id: user.id,
-            email: user.email || "",
-            username:
-              user.user_metadata?.user_name ||
-              user.email?.split("@")[0] ||
-              `user_${Date.now()}`,
-            profilePictureUrl: user.user_metadata?.avatar_url || null,
-          },
-        });
-        userProfileData = newProfile as UserProfile;
-      } catch (e: unknown) {
-        if (e.code === "P2002") {
-          const existingProfile = await prisma.profile.findUnique({
-            where: { id: user.id },
-          });
-          userProfileData = existingProfile as UserProfile;
-        } else {
-          console.error("Error ensuring profile exists:", e);
-        }
+    try {
+      // Use the profile service to get or create the profile
+      const profileResult = await createOrGetProfile(user);
+      if (profileResult.success && profileResult.data) {
+        userProfileData = profileResult.data as UserProfile;
+      } else {
+        console.error("Failed to get or create profile:", profileResult.error);
       }
+    } catch (error) {
+      console.error("Error getting profile:", error);
     }
   } else {
     redirect("/login");
@@ -59,14 +39,12 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navigation />
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 mt-4"
-      >
+      <Navigation 
+        initialUser={user ?? null}
+        profilePictureUrl={userProfileData?.profilePictureUrl}
+        username={userProfileData?.username}
+      />
+      <MotionMain className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 pt-20">
         <header className="mb-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-primary animate-fade-in">
             User Profile
@@ -85,7 +63,7 @@ export default async function ProfilePage() {
             </p>
           </div>
         )}
-      </motion.main>
+      </MotionMain>
     </div>
   );
 }

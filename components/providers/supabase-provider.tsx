@@ -21,10 +21,9 @@ export default function SupabaseProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.access_token !== undefined) {
-        // Refresh the page to update the user's session
-        window.location.reload();
-      }
+      // Auth state changes are handled by individual components
+      // No need to reload the entire page here
+      console.log('Auth state changed:', _event, session?.user?.email);
     });
 
     return () => {

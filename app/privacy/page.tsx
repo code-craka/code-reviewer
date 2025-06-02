@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-16"
+        className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-16 pt-20"
       >
         <h1 className="text-4xl font-bold text-primary mb-8">Privacy Policy</h1>
         <div className="prose prose-invert max-w-none lg:prose-lg text-muted-foreground prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">

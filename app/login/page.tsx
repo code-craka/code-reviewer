@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion"; // Import motion
+import { MotionDiv } from "@/components/ui/motion-wrapper"; // Import client-side motion wrapper
 
 type SearchParamsType = {
   next?: string | string[];
@@ -18,53 +18,51 @@ type PageProps = {
 export default async function LoginPage({ searchParams }: PageProps) {
   const supabase = await createSupabaseServerClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Use searchParams directly
-  const params = searchParams;
+  const awaitedSearchParams = await searchParams;
+  const { next: nextParam, message: messageParam, error: errorParam } = awaitedSearchParams;
+  
+  // Process the next path
+  let nextPath = "/dashboard";
+  if (typeof nextParam === "string") {
+    nextPath = nextParam;
+  } else if (Array.isArray(nextParam) && nextParam.length > 0) {
+    nextPath = nextParam[0];
+  }
 
-  // Handle both string and string[] types for query parameters
-  const nextPath =
-    typeof params.next === "string"
-      ? params.next
-      : Array.isArray(params.next)
-        ? params.next[0]
-        : "/reviewer";
+  // Process message parameter
+  let messageValue: string | undefined = undefined;
+  if (typeof messageParam === "string") {
+    messageValue = messageParam;
+  } else if (Array.isArray(messageParam) && messageParam.length > 0) {
+    messageValue = messageParam[0];
+  }
 
-  if (session) {
+  // Process error parameter
+  let errorValue: string | undefined = undefined;
+  if (typeof errorParam === "string") {
+    errorValue = errorParam;
+  } else if (Array.isArray(errorParam) && errorParam.length > 0) {
+    errorValue = errorParam[0];
+  }
+
+  if (user) {
     redirect(nextPath);
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen flex flex-col items-center justify-center bg-background p-4 py-8"
-    >
+    <MotionDiv className="min-h-screen flex flex-col items-center justify-center bg-background p-4 py-8">
       <div className="absolute top-4 left-4">
         <Button variant="link" asChild>
           <Link href="/">&larr; Back to Home</Link>
         </Button>
       </div>
       <AuthForm
-        initialMessage={
-          typeof params.message === "string"
-            ? params.message
-            : Array.isArray(params.message)
-              ? params.message[0]
-              : undefined
-        }
-        initialError={
-          typeof params.error === "string"
-            ? params.error
-            : Array.isArray(params.error)
-              ? params.error[0]
-              : undefined
-        }
+        initialMessage={messageValue}
+        initialError={errorValue}
       />
-    </motion.div>
+    </MotionDiv>
   );
 }

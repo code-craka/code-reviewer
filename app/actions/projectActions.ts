@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Project, ActionResponse } from "@/types/index";
 import { revalidatePath } from "next/cache";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 export async function getUserProjects(): Promise<ActionResponse<Project[]>> {
   const supabase = await createSupabaseServerClient();
@@ -15,9 +16,15 @@ export async function getUserProjects(): Promise<ActionResponse<Project[]>> {
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
   try {
     const projects = await prisma.project.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: profileResult.data.id },
       orderBy: { updatedAt: "desc" },
     });
     return { success: true, data: projects as Project[] };
@@ -39,6 +46,12 @@ export async function createNewProject(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
   const name = formData.get("name") as string;
 
   if (!name || name.trim() === "") {
@@ -48,12 +61,12 @@ export async function createNewProject(
   try {
     const newProject = await prisma.project.create({
       data: {
-        ownerId: user.id,
+        ownerId: profileResult.data.id,
         name: name.trim(),
       },
     });
     revalidatePath("/projects");
-    revalidatePath("/reviewer");
+    revalidatePath("/dashboard");
     return {
       success: true,
       data: newProject as Project,
@@ -77,6 +90,12 @@ export async function updateExistingProject(
     return { success: false, error: "User not authenticated" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
   const projectId = formData.get("projectId") as string;
   const name = formData.get("name") as string | undefined;
   const code = formData.get("code") as string | undefined;
@@ -97,7 +116,7 @@ export async function updateExistingProject(
       where: { id: projectId },
     });
 
-    if (!project || project.ownerId !== user.id) {
+    if (!project || project.ownerId !== profileResult.data.id) {
       return { success: false, error: "Project not found or not authorized" };
     }
 
@@ -106,6 +125,7 @@ export async function updateExistingProject(
       data: updates,
     });
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
     revalidatePath(`/reviewer?projectId=${projectId}`); // Revalidate specific project view
     revalidatePath("/reviewer"); // Revalidate general reviewer page (project list in dropdown)
     return {
@@ -134,12 +154,18 @@ export async function deleteExistingProject(
     return { success: false, error: "Project ID is required" };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
 
-    if (!project || project.ownerId !== user.id) {
+    if (!project || project.ownerId !== profileResult.data.id) {
       return { success: false, error: "Project not found or not authorized" };
     }
 
@@ -147,7 +173,7 @@ export async function deleteExistingProject(
       where: { id: projectId },
     });
     revalidatePath("/projects");
-    revalidatePath("/reviewer");
+    revalidatePath("/dashboard");
     return { success: true, message: "Project deleted successfully!" };
   } catch (error) {
     console.error("Error deleting project:", error);
@@ -170,9 +196,15 @@ export async function getProjectById(
     return { success: false, error: "Project ID is required." };
   }
 
+  // Get or create user profile
+  const profileResult = await createOrGetProfile(user);
+  if (!profileResult.success || !profileResult.data) {
+    return { success: false, error: "Failed to get user profile" };
+  }
+
   try {
     const project = await prisma.project.findUnique({
-      where: { id: projectId, ownerId: user.id }, // Ensure user owns the project
+      where: { id: projectId, ownerId: profileResult.data.id }, // Ensure user owns the project
     });
 
     if (!project) {

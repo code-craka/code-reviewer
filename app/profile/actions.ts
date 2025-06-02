@@ -1,15 +1,15 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { UserProfile, ActionResponse } from "@/types";
+import { createOrGetProfile, updateProfile } from "@/lib/auth/profile-service";
 
 // Define a type for profile updates that matches Prisma's expected format
 type ProfileUpdates = {
   username?: string;
-  profilePictureUrl?: string | null;
-  bio?: string | null;
+  profilePictureUrl?: string;
+  bio?: string;
 };
 
 // Helper function to ensure type safety when converting from form data to Prisma-compatible updates
@@ -20,11 +20,11 @@ function sanitizeUpdates(updates: Record<string, unknown>): ProfileUpdates {
     result.username = updates.username;
   }
   
-  if (updates.profilePictureUrl === null || typeof updates.profilePictureUrl === 'string') {
+  if (typeof updates.profilePictureUrl === 'string') {
     result.profilePictureUrl = updates.profilePictureUrl;
   }
   
-  if (updates.bio === null || typeof updates.bio === 'string') {
+  if (typeof updates.bio === 'string') {
     result.bio = updates.bio;
   }
   
@@ -65,24 +65,21 @@ export async function updateProfileServerAction(
   }
 
   try {
+    // Get or create user profile first to ensure it exists
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to get user profile" };
+    }
+
+    const profile = profileResult.data;
+
     // Use the sanitizeUpdates function to ensure type safety
     const profileUpdates = sanitizeUpdates(updates);
     
-    let profile = await prisma.profile.findUnique({ where: { id: user.id } });
-    if (!profile) {
-      profile = await prisma.profile.create({
-        data: {
-          id: user.id,
-          email: user.email || "",
-          username: user.email?.split("@")[0] || `user_${Date.now()}`,
-          ...profileUpdates,
-        },
-      });
-    } else {
-      profile = await prisma.profile.update({
-        where: { id: user.id },
-        data: profileUpdates,
-      });
+    // Update the profile with the new data
+    const updatedProfileResult = await updateProfile(profile.id, profileUpdates);
+    if (!updatedProfileResult.success || !updatedProfileResult.data) {
+      return { success: false, error: "Failed to update profile" };
     }
 
     revalidatePath("/profile");
@@ -90,7 +87,7 @@ export async function updateProfileServerAction(
 
     return {
       success: true,
-      data: profile as UserProfile,
+      data: updatedProfileResult.data as UserProfile,
       message: "Profile updated successfully!",
     };
   } catch (error: unknown) {

@@ -33,30 +33,34 @@ export default function TestStoragePage() {
   useEffect(() => {
     const fetchUser = async () => {
       const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+      
       if (user) {
         setUserId(user.id);
 
-        // Check if user is admin
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+        // Get profile using the profile service to check admin role
+        try {
+          // Note: This is client-side so we'll use direct query for simplicity
+          // In a real app, this should be a server action
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
 
-        if (profile && profile.role === "admin") {
-          setIsAdmin(true);
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          } else {
+            setIsAdmin(profile?.role === "admin");
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
         }
-      } else if (error) {
-        toast({
-          title: "Authentication Error",
-          description: "Please sign in to test storage functionality",
-          variant: "destructive",
-        });
       }
     };
 

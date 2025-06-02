@@ -9,6 +9,7 @@ import {
   ProjectVisibility,
 } from "@/lib/projects/project-service";
 import { ProjectFilterOptions } from "@/lib/projects/project-filter";
+import { createOrGetProfile } from "@/lib/auth/profile-service";
 
 /**
  * Get all projects for the current user
@@ -20,18 +21,25 @@ export async function getUserProjectsAction(options?: ProjectFilterOptions) {
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
 
     // Build the query based on filter options
     const baseQuery = supabase
@@ -43,8 +51,8 @@ export async function getUserProjectsAction(options?: ProjectFilterOptions) {
         owner:Profile!ownerId(id, username, email, profilePictureUrl)
       `,
       )
-      .eq("ownerId", userId)
-      .or(`teamId.is.null,team.members.cs.{${userId}}`)
+      .eq("ownerId", profileId)
+      .or(`teamId.is.null,team.members.cs.{${profileId}}`)
       .is("deletedAt", null);
 
     // Add sorting
@@ -108,18 +116,25 @@ export async function getProjectByIdAction(projectId: string) {
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
 
     const { data, error } = await supabase
       .from("Project")
@@ -144,14 +159,14 @@ export async function getProjectByIdAction(projectId: string) {
     }
 
     // Check if user has access to this project
-    const isOwner = data.ownerId === userId;
+    const isOwner = data.ownerId === profileId;
 
     let isTeamMember = false;
     if (data.teamId) {
       const { data: teamMember } = await supabase
         .from("TeamMember")
         .select("id")
-        .eq("userId", userId)
+        .eq("userId", profileId)
         .eq("teamId", data.teamId)
         .single();
 
@@ -195,18 +210,25 @@ export async function createProjectAction(data: ProjectData) {
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
     const now = new Date().toISOString();
 
     // If teamId is provided, check if user is a member of the team
@@ -214,7 +236,7 @@ export async function createProjectAction(data: ProjectData) {
       const { data: teamMember, error: teamError } = await supabase
         .from("TeamMember")
         .select("id")
-        .eq("userId", userId)
+        .eq("userId", profileId)
         .eq("teamId", data.teamId)
         .single();
 
@@ -229,7 +251,7 @@ export async function createProjectAction(data: ProjectData) {
         {
           name: data.name,
           description: data.description || "",
-          ownerId: userId,
+          ownerId: profileId,
           teamId: data.teamId,
           visibility: data.visibility || "private",
           status: "active",
@@ -247,6 +269,7 @@ export async function createProjectAction(data: ProjectData) {
 
     // Revalidate projects page to show the new project
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
 
     return { data: projectData, success: true };
   } catch (error) {
@@ -271,18 +294,25 @@ export async function updateProjectAction(
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
 
     // First check if user has permission to update
     const { data: projectData, error: fetchError } = await supabase
@@ -301,7 +331,7 @@ export async function updateProjectAction(
     }
 
     // Check if user is owner
-    const isOwner = projectData.ownerId === userId;
+    const isOwner = projectData.ownerId === profileId;
 
     // Check if user is team admin
     let isTeamAdmin = false;
@@ -309,7 +339,7 @@ export async function updateProjectAction(
       const { data: teamMember } = await supabase
         .from("TeamMember")
         .select("role")
-        .eq("userId", userId)
+        .eq("userId", profileId)
         .eq("teamId", projectData.teamId)
         .single();
 
@@ -350,6 +380,7 @@ export async function updateProjectAction(
 
     // Revalidate project pages
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
     revalidatePath(`/projects/${projectId}`);
 
     // Ensure proper typing for status and visibility
@@ -380,18 +411,25 @@ export async function archiveProjectAction(projectId: string) {
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
 
     // Check permissions
     const { data: projectData, error: fetchError } = await supabase
@@ -410,7 +448,7 @@ export async function archiveProjectAction(projectId: string) {
     }
 
     // Check if user is owner
-    const isOwner = projectData.ownerId === userId;
+    const isOwner = projectData.ownerId === profileId;
 
     // Check if user is team admin
     let isTeamAdmin = false;
@@ -418,7 +456,7 @@ export async function archiveProjectAction(projectId: string) {
       const { data: teamMember } = await supabase
         .from("TeamMember")
         .select("role")
-        .eq("userId", userId)
+        .eq("userId", profileId)
         .eq("teamId", projectData.teamId)
         .single();
 
@@ -457,6 +495,7 @@ export async function archiveProjectAction(projectId: string) {
 
     // Revalidate project pages
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
 
     return { data: archivedProject, success: true };
   } catch (error) {
@@ -478,18 +517,25 @@ export async function deleteProjectAction(projectId: string) {
 
     // Get the current user
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      logger.error("Failed to get user session", {
-        error: sessionError?.message,
+    if (userError || !user) {
+      logger.error("Failed to get user", {
+        error: userError?.message,
       });
       return { error: "Authentication required", success: false };
     }
 
-    const userId = session.user.id;
+    // Get or create user profile
+    const profileResult = await createOrGetProfile(user);
+    if (!profileResult.success || !profileResult.data) {
+      logger.error("Failed to create/get profile", { error: profileResult.error });
+      return { error: "Failed to get user profile", success: false };
+    }
+
+    const profileId = profileResult.data.id;
 
     // Check if user is the owner
     const { data: projectData, error: fetchError } = await supabase
@@ -507,7 +553,7 @@ export async function deleteProjectAction(projectId: string) {
     }
 
     // Only the owner can delete a project
-    if (projectData.ownerId !== userId) {
+    if (projectData.ownerId !== profileId) {
       return {
         error: "Only the project owner can delete this project",
         success: false,
@@ -534,6 +580,7 @@ export async function deleteProjectAction(projectId: string) {
 
     // Revalidate projects page
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
 
     return { success: true };
   } catch (error) {

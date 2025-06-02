@@ -9,6 +9,9 @@ export async function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: {
+        flowType: 'pkce'
+      },
       cookies: {
         getAll() {
           // Return an array of { name, value, ...options }
@@ -31,6 +34,9 @@ export async function createSupabaseServerAdminClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
+      auth: {
+        flowType: 'pkce'
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();
