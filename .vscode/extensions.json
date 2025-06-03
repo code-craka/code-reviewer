@@ -1,3 +1,5 @@
 {
-  "recommendations": ["openai.chatgpt"]
+  "recommendations": [
+    "denoland.vscode-deno"
+  ]
 }
