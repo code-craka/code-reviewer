@@ -5,27 +5,40 @@ import type {
   SimilaritySearchResult
 } from '@/types/rag';
 
-interface RAGPipelineRequest {
-  action: 'create_review' | 'search_similar' | 'generate_embedding' | 'complete_review';
+interface AIReviewRequest {
+  action: 'generate_embedding' | 'search_similar' | 'review_code' | 'analyze_diff';
   projectId: string;
   profileId: string;
   data: {
+    content?: string;
+    searchQuery?: string;
     diffContent?: string;
     filePath?: string;
     language?: string;
-    content?: string;
-    embedding?: number[];
+    contextData?: {
+      store?: boolean;
+      [key: string]: any;
+    };
     similarityThreshold?: number;
     limit?: number;
-    reviewId?: string;
-    aiResponse?: string;
-    model?: string;
   };
 }
 
-interface RAGPipelineResponse {
-  success: boolean;
-  data?: any;
+interface AIReviewResponse {
+  success?: boolean;
+  action: string;
+  requestId?: string;
+  embedding?: number[];
+  dimensions?: number;
+  model?: string;
+  processingTimeMs: number;
+  stored?: boolean;
+  searchQuery?: string;
+  similarResults?: any[];
+  similarReviews?: any[];
+  cacheHit?: boolean;
+  similarCount?: number;
+  metadata?: any;
   error?: string;
 }
 
@@ -35,7 +48,7 @@ export class RAGClient {
 
   constructor() {
     this.supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    this.functionUrl = `${this.supabaseUrl}/functions/v1/rag-pipeline`;
+    this.functionUrl = `${this.supabaseUrl}/functions/v1/ai-review-production`;
   }
 
   // Initialize a new code review with RAG pipeline
@@ -53,17 +66,17 @@ export class RAGClient {
   }>> {
     try {
       const supabase = await createSupabaseServerClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (userError || !user) {
         return {
           success: false,
           error: 'User not authenticated'
         };
       }
 
-      const request: RAGPipelineRequest = {
-        action: 'create_review',
+      const request: AIReviewRequest = {
+        action: 'review_code',
         projectId,
         profileId,
         data: {
@@ -77,7 +90,7 @@ export class RAGClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(request),
       });
@@ -90,18 +103,37 @@ export class RAGClient {
         };
       }
 
-      const result: RAGPipelineResponse = await response.json();
+      const result: AIReviewResponse = await response.json();
 
-      if (!result.success) {
+      if (result.error) {
         return {
           success: false,
           error: result.error
         };
       }
 
+      // Convert AI Review response to RAG format
       return {
         success: true,
-        data: result.data
+        data: {
+          reviewRequest: {
+            id: result.requestId || crypto.randomUUID(),
+            project_id: projectId,
+            profile_id: profileId,
+            file_path: filePath || 'unknown',
+            diff_content: diffContent,
+            diff_hash: crypto.subtle ? await crypto.subtle.digest('SHA-256', new TextEncoder().encode(diffContent)).then(buffer => Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('')) : Math.random().toString(36),
+            language,
+            status: 'pending' as const,
+            priority: 1,
+            cache_hit: result.cacheHit || false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          } as ReviewRequest,
+          similarReviews: result.similarReviews || [],
+          cacheHit: result.cacheHit || false,
+          processingTimeMs: result.processingTimeMs
+        }
       };
     } catch (error) {
       return {
@@ -123,21 +155,21 @@ export class RAGClient {
   ): Promise<RAGResponse<SimilaritySearchResult[]>> {
     try {
       const supabase = await createSupabaseServerClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (userError || !user) {
         return {
           success: false,
           error: 'User not authenticated'
         };
       }
 
-      const request: RAGPipelineRequest = {
+      const request: AIReviewRequest = {
         action: 'search_similar',
         projectId,
         profileId,
         data: {
-          content,
+          searchQuery: content,
           similarityThreshold: options?.similarityThreshold || 0.85,
           limit: options?.limit || 5
         }
@@ -147,7 +179,7 @@ export class RAGClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(request),
       });
@@ -160,9 +192,9 @@ export class RAGClient {
         };
       }
 
-      const result: RAGPipelineResponse = await response.json();
+      const result: AIReviewResponse = await response.json();
 
-      if (!result.success) {
+      if (result.error) {
         return {
           success: false,
           error: result.error
@@ -171,7 +203,7 @@ export class RAGClient {
 
       return {
         success: true,
-        data: result.data.similarReviews || []
+        data: result.similarResults || []
       };
     } catch (error) {
       return {
@@ -193,25 +225,30 @@ export class RAGClient {
   ): Promise<RAGResponse<void>> {
     try {
       const supabase = await createSupabaseServerClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (userError || !user) {
         return {
           success: false,
           error: 'User not authenticated'
         };
       }
 
-      const request: RAGPipelineRequest = {
-        action: 'complete_review',
+      // Generate embedding for the AI response to store for future similarity searches
+      const request: AIReviewRequest = {
+        action: 'generate_embedding',
         projectId,
         profileId,
         data: {
-          reviewId,
-          aiResponse,
-          model,
-          filePath,
-          language
+          content: aiResponse,
+          contextData: {
+            store: true,
+            reviewId,
+            model,
+            filePath,
+            language,
+            type: 'ai_response'
+          }
         }
       };
 
@@ -219,7 +256,7 @@ export class RAGClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(request),
       });
@@ -232,9 +269,9 @@ export class RAGClient {
         };
       }
 
-      const result: RAGPipelineResponse = await response.json();
+      const result: AIReviewResponse = await response.json();
 
-      if (!result.success) {
+      if (result.error) {
         return {
           success: false,
           error: result.error
@@ -258,27 +295,30 @@ export class RAGClient {
   ): Promise<RAGResponse<number[]>> {
     try {
       const supabase = await createSupabaseServerClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (userError || !user) {
         return {
           success: false,
           error: 'User not authenticated'
         };
       }
 
-      const request: RAGPipelineRequest = {
+      const request: AIReviewRequest = {
         action: 'generate_embedding',
         projectId,
         profileId,
-        data: { content }
+        data: { 
+          content,
+          contextData: { store: false }
+        }
       };
 
       const response = await fetch(this.functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(request),
       });
@@ -291,9 +331,9 @@ export class RAGClient {
         };
       }
 
-      const result: RAGPipelineResponse = await response.json();
+      const result: AIReviewResponse = await response.json();
 
-      if (!result.success) {
+      if (result.error) {
         return {
           success: false,
           error: result.error
@@ -302,7 +342,7 @@ export class RAGClient {
 
       return {
         success: true,
-        data: result.data.embedding
+        data: result.embedding || []
       };
     } catch (error) {
       return {
